@@ -15,11 +15,13 @@ def init_menu_bar(parent):
                                                           lambda i, parent: go_to_contact(parent),
                                                           parent)
 
+
 def check_void(list):
     for i in list:
         if i == '':
             return True
     return False
+
 
 def add_result():
     builder = Gtk.Builder()
@@ -80,6 +82,9 @@ def fill_tree_view_list(headers, data, list_model, tree):
 
 
 def fill_combo_box(combo_box, combo_list, data):
+    # combo_model    ---> Gtk.List_store(str, str, ..., str)
+    # data          ---> [['dsd'], ...]
+
     for text in data:
         combo_list.append(text)
     combo_box.set_model(combo_list)
@@ -100,44 +105,44 @@ def transfer(parent, present):
     present.present()
 
 
-def go_to_contact(parent):
-    transfer(parent, WContact(parent))
+def go_to_contact(parent, sql):
+    transfer(parent, WContact(parent, sql))
 
 
-def go_to_admin_manager(parent):
-    transfer(parent, WAdminManager(parent))
+def go_to_admin_manager(parent, sql):
+    transfer(parent, WAdminManager(parent, sql))
 
 
-def go_to_team_manager(parent):
-    transfer(parent, WTeamManager(parent))
+def go_to_team_manager(parent, sql):
+    transfer(parent, WTeamManager(parent, sql))
 
 
-def go_to_view_team(parent):
-    transfer(parent, WViewTeam(parent))
+def go_to_view_team(parent, sql):
+    transfer(parent, WViewTeam(parent, sql))
 
 
-def go_to_view_player(parent):
-    transfer(parent, WViewPlayer(parent))
+def go_to_view_player(parent, sql):
+    transfer(parent, WViewPlayer(parent, sql))
 
 
-def go_to_add_team(parent):
-    transfer(parent, WAddTeam(parent))
+def go_to_add_team(parent, sql):
+    transfer(parent, WAddTeam(parent, sql))
 
 
-def go_to_add_player(parent):
-    transfer(parent, WAddPlayer(parent))
+def go_to_add_player(parent, sql):
+    transfer(parent, WAddPlayer(parent, sql))
 
 
-def go_to_add_user(parent):
-    transfer(parent, WAddUser(parent))
+def go_to_add_user(parent, sql, user=None):
+    transfer(parent, WAddUser(parent, sql, user))
 
 
-def go_to_add_tournament(parent):
-    transfer(parent, WAddTournament(parent))
+def go_to_add_tournament(parent, sql):
+    transfer(parent, WAddTournament(parent, sql))
 
 
-def go_to_add_match(parent):
-    transfer(parent, WAddMatch(parent))
+def go_to_add_match(parent, sql):
+    transfer(parent, WAddMatch(parent, sql))
 
 
 class WMain(Gtk.Window):
@@ -225,11 +230,11 @@ class WMain(Gtk.Window):
         self.builder.get_object("entry_password").set_text('')
 
         if user.ocupation == 'admin':
-            go_to_admin_manager(self)
+            go_to_admin_manager(self, self.DB_connection)
         elif user.ocupation == 'referee':
             pass
         elif user.ocupation == 'manager':
-            go_to_team_manager(self)
+            go_to_team_manager(self, self.DB_connection)
 
     def on_tournament_changed(self, combo):
         print(combo)
@@ -356,10 +361,11 @@ class WContact(Gtk.Window):
 class WAdminManager(Gtk.Window):
     """docstring for WindowAdminManager"""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, DB_connection=None):
         Gtk.Window.__init__(self)
         # Setting parent window
         self.parent = parent
+        self.DB_connection = DB_connection
         # Putting max size to the window
         self.maximize()
         # Avoiding resize window 
@@ -394,6 +400,13 @@ class WAdminManager(Gtk.Window):
         # SEARCHENTRY
         self.builder.get_object("serachentry_global").connect("search-changed", self.on_search_changed)
 
+        # treeviewlist
+        users = self.builder.get_object("treeview_user")
+        headers = ["Nombre", "Apellido paterno", "Apellido materno", "Ciudad", "Usuario", "Contraseña"]
+        list_model = Gtk.ListStore(str, str, str, str, str, str)
+        data = self.DB_connection.read("Usr", ["name", "last_name", "last_last_name", "city", "email", "password"])
+        fill_tree_view_list(headers, data, list_model, users)
+
     def on_search_changed(self, entry):
         print(entry.get_text())
 
@@ -402,27 +415,51 @@ class WAdminManager(Gtk.Window):
         print(active)
 
         if active == "Tournament":
-            go_to_add_tournament(self)
+            go_to_add_tournament(self, self.DB_connection)
         elif active == "Team":
-            go_to_add_team(self)
+            go_to_add_team(self, self.DB_connection)
         elif active == "Player":
-            go_to_add_player(self)
+            go_to_add_player(self, self.DB_connection)
         elif active == "User":
-            go_to_add_user(self)
+            go_to_add_user(self, self.DB_connection)
         elif active == "Match":
-            go_to_add_match(self)
+            go_to_add_match(self, self.DB_connection)
 
     def on_modify_button_pressed(self, button):
         active = self.builder.get_object("stack").get_visible_child().get_name()
-        print(active)
+
+        if active == "Tournament":
+            go_to_add_tournament(self, self.DB_connection)
+        elif active == "Team":
+            go_to_add_team(self, self.DB_connection)
+        elif active == "Player":
+            go_to_add_player(self, self.DB_connection)
+        elif active == "User":
+            # go_to_add_user(self, self.DB_connection)
+            model, selection = self.builder.get_object("selection_user").get_selected()
+            data = self.DB_connection.read("Usr", ["*"], "email='{}'".format(model[selection][4]))[0]
+            user = User(data[10], data[11], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9],
+                        data[12], data[0], data[1])
+            go_to_add_user(self, self.DB_connection, user)
+            return
+        elif active == "Match":
+            go_to_add_match(self, self.DB_connection)
+
+        self.builder.get_object("selection_user").unselect_all()
 
     def on_delete_button_pressed(self, button):
         active = self.builder.get_object("stack").get_visible_child().get_name()
         dialog = DialogConfirm(self, "Delete " + active + "?", "¿Está seguro de eliminar?")
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
+            model, selection = None, None
+            if active == "User":
+                model, selection = self.builder.get_object("selection_user").get_selected()
+                self.DB_connection.delete('Usr', "email='{}'".format(model[selection][4]))
+            if model is not None:
+                model.remove(selection)
+            self.DB_connection.commit()
             print("Delete")
-
         dialog.destroy()
 
     def onDestroy(self, *args):
@@ -483,10 +520,11 @@ class WTeamManager(Gtk.Window):
 class WAddTeam(Gtk.Window):
     """docstring for WindowAdminManager"""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, DB_connection=None):
         Gtk.Window.__init__(self)
         # Setting parent window
         self.parent = parent
+        self.DB_connection = DB_connection
         # Putting max size to the window
         self.maximize()
         # Avoiding resize window 
@@ -525,7 +563,7 @@ class WAddTeam(Gtk.Window):
 class WAddUser(Gtk.Window):
     """docstring for WindowAdminManager"""
 
-    def __init__(self, parent=None, user=None, DB_connection=None):
+    def __init__(self, parent=None, DB_connection=None, user=None):
         Gtk.Window.__init__(self)
         self.user = user
         self.builder = None
@@ -561,6 +599,32 @@ class WAddUser(Gtk.Window):
             go_back(parent, present), self.parent, self)
         self.builder.get_object("button_add").connect("clicked", self.on_add_button_pressed)
 
+        # combobox
+        combo_job = self.builder.get_object("combobox_job")
+        job_list = Gtk.ListStore(str)
+        data = [['Admin'], ['DT'], ['Árbitro']]
+        fill_combo_box(combo_job, job_list, data)
+
+        if self.user is not None:
+            self.builder.get_object("entry_name").set_text(self.user.name)
+            self.builder.get_object("entry_lastname").set_text(self.user.last_name)
+            self.builder.get_object("entry_llastname").set_text(self.user.last_last_name)
+            self.builder.get_object("entry_phonenumber").set_text(self.user.phone)
+            self.builder.get_object("entry_city").set_text(self.user.city)
+            self.builder.get_object("entry_suburb").set_text(self.user.suburb)
+            self.builder.get_object("entry_street").set_text(self.user.street)
+            self.builder.get_object("entry_number").set_text(str(self.user.no))
+            self.builder.get_object("entry_email").set_text(self.user.email)
+            self.builder.get_object("entry_password").set_text(self.user.password)
+            self.builder.get_object("entry_password2").set_text(self.user.password)
+            if self.user.ocupation == 'admin':
+                self.builder.get_object("combobox_job").set_active(0)
+            elif self.user.ocupation == 'manager':
+                self.builder.get_object("combobox_job").set_active(1)
+            elif self.user.ocupation == 'referee':
+                self.builder.get_object("combobox_job").set_active(2)
+            self.builder.get_object("button_add").set_label("Modificar")
+
     def on_add_button_pressed(self, button):
         name = self.builder.get_object("entry_name").get_text()
         last_name = self.builder.get_object("entry_lastname").get_text()
@@ -573,24 +637,55 @@ class WAddUser(Gtk.Window):
         email = self.builder.get_object("entry_email").get_text()
         password = self.builder.get_object("entry_password").get_text()
         password2 = self.builder.get_object("entry_password2").get_text()
-        job = self.builder.get_object("combobox_job")
+        i = self.builder.get_object("combobox_job").get_active_iter()
+        job = self.builder.get_object("combobox_job").get_model()[i][0]
 
-        entries = [name, last_name, last_last_name, city, suburb, street, number, phonenumber, email, password, password2]
+        entries = [name, last_name, last_last_name, city, suburb, street, number, phonenumber, email, password,
+                   password2]
+
         if check_void(entries):
             DialogOK("Debes llenar todos los campos.")
             return
+
         if password != password2:
             DialogOK("La contraseña no coincide.")
-            self.builder.get_object("entry_passwrod").set_text("")
-            self.builder.get_object("entry_passwrod2").set_text("")
+            self.builder.get_object("entry_password").set_text("")
+            self.builder.get_object("entry_password2").set_text("")
             return
         user = User(email)
 
-        if user.valid_user(self.DB_connection):
-            DialogOK("El e-mail ya está registrado.")
-            self.builder.get_object("entry_email").set_text("")
-            return
+        if job == 'Admin':
+            self.user.ocupation = 'admin'
+        elif job == 'DT':
+            self.user.ocupation = 'manager'
+        elif job == 'Árbitro':
+            self.user.ocupation = 'referee'
 
+        if button.get_label() == "Modificar":
+            self.user.email = email
+            self.user.password = password
+            self.user.name = name
+            self.user.last_name = last_name
+            self.user.last_last_name = last_last_name
+            self.user.city = city
+            self.user.suburb = suburb
+            self.user.street = street
+            self.user.no = number
+            self.user.phone = phonenumber
+            self.user.update(self.DB_connection)
+            DialogOK("Se ha modificado con éxito.")
+        else:
+            if user.valid_user(self.DB_connection):
+                DialogOK("El e-mail ya está registrado.")
+                self.builder.get_object("entry_email").set_text("")
+                return
+
+            del user
+            user = User(email, password, name, last_name, last_last_name, city, suburb, street, number, phonenumber,
+                        job)
+            user.add(self.DB_connection)
+            DialogOK("Se ha agregado con éxito.")
+        self.onDestroy()
 
     def onDestroy(self, *args):
         go_back(self.parent, self)
@@ -599,10 +694,11 @@ class WAddUser(Gtk.Window):
 class WAddPlayer(Gtk.Window):
     """docstring for WindowAdminManager"""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, DB_connection=None):
         Gtk.Window.__init__(self)
         # Setting parent window
         self.parent = parent
+        self.DB_connection = DB_connection
         # Putting max size to the window
         self.maximize()
         # Avoiding resize window 
@@ -642,10 +738,11 @@ class WAddPlayer(Gtk.Window):
 class WAddTournament(Gtk.Window):
     """docstring for WindowAdminManager"""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, DB_connection=None):
         Gtk.Window.__init__(self)
         # Setting parent window
         self.parent = parent
+        self.DB_connection = DB_connection
         # Putting max size to the window
         self.maximize()
         # Avoiding resize window 
@@ -685,10 +782,11 @@ class WAddTournament(Gtk.Window):
 class WAddMatch(Gtk.Window):
     """docstring for WindowAdminManager"""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, DB_connection=None):
         Gtk.Window.__init__(self)
         # Setting parent window
         self.parent = parent
+        self.DB_connection = DB_connection
         # Putting max size to the window
         self.maximize()
         # Avoiding resize window 

@@ -47,8 +47,8 @@ class User():
         self.id_user = sql.next_ID('Usr', 'id_user') + 1
 
         args = [
-            self.id_user, self.id_league, self.name, self.last_name, self.last_last_name,
-            self.city, self.suburb, self.street, self.no, self.phone, self.email, self.password, self.ocupation
+            str(self.id_user), str(self.id_league), self.name, self.last_name, self.last_last_name,
+            self.city, self.suburb, self.street, str(self.no), self.phone, self.email, self.password, self.ocupation
         ]
         # create(Nombre de la tabla, ...)
         sql.create('Usr', self.columns, args)
@@ -64,7 +64,7 @@ class User():
             self.id_user, self.id_league, self.name, self.last_name, self.last_last_name,
             self.city, self.suburb, self.street, self.no, self.phone, self.email, self.password, self.ocupation
         ]
-        sql.update('Usr', self.columns, args, 'id_user={}'.format(self.id_user))
+        sql.update('Usr', self.columns, args, "email='{}'".format(self.email))
         sql.commit()
 
     def fill_data(self, data):

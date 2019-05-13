@@ -48,7 +48,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_llastname">
+              <object class="GtkEntry" id="entry_lastname">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="halign">center</property>
@@ -61,7 +61,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_lastname">
+              <object class="GtkEntry" id="entry_llastname">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="halign">center</property>
@@ -129,6 +129,8 @@
               <object class="GtkEntry" id="entry_password2">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="visibility">False</property>
+                <property name="invisible_char">*</property>
                 <property name="xalign">0.5</property>
                 <property name="placeholder_text" translatable="yes">Contraseña</property>
               </object>
@@ -142,6 +144,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="halign">center</property>
+                <property name="visibility">False</property>
+                <property name="invisible_char">*</property>
                 <property name="xalign">0.5</property>
                 <property name="placeholder_text" translatable="yes">Contraseña</property>
               </object>
@@ -151,12 +155,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_user">
+              <object class="GtkEntry" id="entry_email">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="halign">center</property>
                 <property name="xalign">0.5</property>
-                <property name="placeholder_text" translatable="yes">Usuario</property>
+                <property name="placeholder_text" translatable="yes">e-mail</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>

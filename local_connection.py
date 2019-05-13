@@ -31,7 +31,7 @@ def list2columns(columns):
 def list2assignments(columns, values):
     assignments = ""
     for i in range(len(columns)):
-        assignments += columns[i] + " = \'" + values[i] + "\', "
+        assignments += str(columns[i]) + " = \'" + str(values[i]) + "\', "
 
     return assignments[:len(assignments) - 2]
 
@@ -60,13 +60,7 @@ class SQLConnection():
             print("Error ----> ", e)
         self.init_cursor()
 
-    def __del__(self):
-        if self.cursor is not None:
-            self.cursor.close()
-        if self.connection is not None:
-            self.connection.close()
-
-    def read(self, table, columns, condition=''):
+    def read(self, table, columns, condition=None):
         print("Read")
         data = []
         # query = "SELECT " + list2columns(columns) + " FROM " + table
@@ -114,7 +108,6 @@ class SQLConnection():
     # DELETE Query
     def delete(self, table, condition):
         query = "DELETE FROM {} WHERE {};".format(table, condition)
-
         try:
             self.cursor.execute(query)
             return "Success"
