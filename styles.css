@@ -1,0 +1,161 @@
+#layout_main{
+
+    font-family: 'Open Sans Condensed', arial, sans;
+    padding: 50px;
+    background: #FFFFFF;
+    margin: 50px ;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+}
+#label_header{
+    font-family: Roboto, 'Open Sans Condensed', sans-serif;
+    color: #158A8A;
+    font-size: 25px;
+    font-weight: bold;
+    margin-left: 30px;
+   
+}
+#label_header2{
+    font-family: Roboto, 'Open Sans Condensed', sans-serif;
+    color: #158A8A;
+    font-size: 18px;
+    font-weight: bold;
+    margin-left: 30px;
+   
+}
+
+#label_h1
+{
+    font-family: Roboto, 'Open Sans Condensed', sans-serif;
+    color: #797979;
+    font-size: 35px;
+    font-weight: bold;
+    margin-left: 30px;
+}
+.header{
+    color: red;
+}
+#label_h2
+{
+    font-family: Roboto, 'Open Sans Condensed', sans-serif;
+    color: #797979;
+    font-size: 25px;
+    font-weight: bold;
+    margin-left: 30px;
+}
+#label_h3
+{
+    font-family: Roboto, 'Open Sans Condensed', sans-serif;
+    color: #797979;
+    font-size: 18px;
+    font-weight: bold;
+    margin-left: 30px;
+}
+
+entry{
+    border: 1px solid #27A0A0;
+    color: gray;
+    min-width: 200px;
+    font-family: 'Open Sans Condensed', sans-serif;
+    font-size: 14px;
+    padding: 8px 18px;
+    text-decoration: none;
+}
+/*BUTTOM*/
+button
+{
+    min-width: 150px;
+    box-shadow: inset 0px 1px 0px 0px #45D6D6;
+    background-color: #45D6D6;
+    border: 1px solid #27A0A0;    
+    border: none;
+    padding: 8px 10px 8px 10px;
+    border-radius: 5px;
+    font-size: 20px;
+}
+
+/*COMBO BOX*/
+combobox{
+    min-width: 200px;
+}
+combobox button.combo{
+    background-color: #45D6D6;    
+}
+combobox box arrow{
+    background-color: transparent;    
+}
+
+cellrendertext
+/*TREEVIEW*/
+treeview.view{
+    min-height: 600px;
+
+}
+
+treeview.view{
+    font-size: 17px;
+}    
+treeview.view button{
+    color: gray;
+    font-family: 'Open Sans Condensed', sans-serif;
+    font-size: 18px;
+    border-radius: 0px;
+
+}
+
+/*MENUBAR*/
+
+menubar{
+    background-color: #158A8A;
+}
+menuitem{
+    background-color: #158A8A;
+}
+menuitem label{
+    color: white;   
+}
+
+/*IMAGE*/
+#image_player{
+    min-height: 150px;
+    min-width: 140px;
+    background-color: black;
+}
+
+/*dialog*/
+#dialog
+{
+    margin: 15px;
+}
+
+
+stack{
+    padding: 20px;
+}
+stackswitcher{
+    background-color: transparent;
+}
+
+stackswitcher button{
+
+    min-width: 150px;
+    background-color: #A4E9E9;
+    border: 1px solid #27A0A0;
+    border: none; 
+    padding: 8px 10px 8px 10px;
+    margin-right: 5px;
+    font-size: 20px;
+}
+
+
+/*searchentry*/
+.searchentry{
+    margin: 10px 50px 0px 50px;
+
+}
+
+/*popover*/
+
+popover
+{
+    padding: 10px 28px 10px 0px;
+}
