@@ -53,7 +53,7 @@
                 <property name="can_focus">True</property>
                 <property name="halign">center</property>
                 <property name="xalign">0.5</property>
-                <property name="placeholder_text" translatable="yes">Apellido materno</property>
+                <property name="placeholder_text" translatable="yes">Apellido paterno</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -66,7 +66,7 @@
                 <property name="can_focus">True</property>
                 <property name="halign">center</property>
                 <property name="xalign">0.5</property>
-                <property name="placeholder_text" translatable="yes">Apellido paterno</property>
+                <property name="placeholder_text" translatable="yes">Apellido materno</property>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -87,7 +87,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_town">
+              <object class="GtkEntry" id="entry_suburb">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="halign">center</property>
@@ -118,7 +118,7 @@
                 <property name="can_focus">True</property>
                 <property name="halign">center</property>
                 <property name="xalign">0.5</property>
-                <property name="placeholder_text" translatable="yes">Calle y número</property>
+                <property name="placeholder_text" translatable="yes">Calle</property>
               </object>
               <packing>
                 <property name="left_attach">2</property>
@@ -200,21 +200,20 @@
               </object>
               <packing>
                 <property name="left_attach">3</property>
-                <property name="top_attach">2</property>
+                <property name="top_attach">1</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_curp">
+              <object class="GtkEntry" id="entry_number">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="halign">center</property>
-                <property name="margin_left">25</property>
                 <property name="xalign">0.5</property>
-                <property name="placeholder_text" translatable="yes">CURP</property>
+                <property name="placeholder_text" translatable="yes">Número</property>
               </object>
               <packing>
                 <property name="left_attach">3</property>
-                <property name="top_attach">1</property>
+                <property name="top_attach">2</property>
               </packing>
             </child>
             <child>

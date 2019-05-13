@@ -15,6 +15,11 @@ def init_menu_bar(parent):
                                                           lambda i, parent: go_to_contact(parent),
                                                           parent)
 
+def check_void(list):
+    for i in list:
+        if i == '':
+            return True
+    return False
 
 def add_result():
     builder = Gtk.Builder()
@@ -520,11 +525,12 @@ class WAddTeam(Gtk.Window):
 class WAddUser(Gtk.Window):
     """docstring for WindowAdminManager"""
 
-    def __init__(self, parent=None, user=None):
+    def __init__(self, parent=None, user=None, DB_connection=None):
         Gtk.Window.__init__(self)
         self.user = user
         self.builder = None
         self.layout_main = None
+        self.DB_connection = DB_connection
         # Setting parent window
         self.parent = parent
         # Putting max size to the window
@@ -556,9 +562,35 @@ class WAddUser(Gtk.Window):
         self.builder.get_object("button_add").connect("clicked", self.on_add_button_pressed)
 
     def on_add_button_pressed(self, button):
-        name = self.builder.get_object("entry_name")
-        last_name = self.builder.get_object("entry_lastname")
-        name = self.builder.get_object("entry_name")
+        name = self.builder.get_object("entry_name").get_text()
+        last_name = self.builder.get_object("entry_lastname").get_text()
+        last_last_name = self.builder.get_object("entry_llastname").get_text()
+        city = self.builder.get_object("entry_city").get_text()
+        suburb = self.builder.get_object("entry_suburb").get_text()
+        street = self.builder.get_object("entry_street").get_text()
+        number = self.builder.get_object("entry_number").get_text()
+        phonenumber = self.builder.get_object("entry_phonenumber").get_text()
+        email = self.builder.get_object("entry_email").get_text()
+        password = self.builder.get_object("entry_password").get_text()
+        password2 = self.builder.get_object("entry_password2").get_text()
+        job = self.builder.get_object("combobox_job")
+
+        entries = [name, last_name, last_last_name, city, suburb, street, number, phonenumber, email, password, password2]
+        if check_void(entries):
+            DialogOK("Debes llenar todos los campos.")
+            return
+        if password != password2:
+            DialogOK("La contraseña no coincide.")
+            self.builder.get_object("entry_passwrod").set_text("")
+            self.builder.get_object("entry_passwrod2").set_text("")
+            return
+        user = User(email)
+
+        if user.valid_user(self.DB_connection):
+            DialogOK("El e-mail ya está registrado.")
+            self.builder.get_object("entry_email").set_text("")
+            return
+
 
     def onDestroy(self, *args):
         go_back(self.parent, self)
