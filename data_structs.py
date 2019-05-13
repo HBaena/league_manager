@@ -17,10 +17,11 @@ class User():
         self.phone = phone
         self.ocupation = ocupation
         self.id_league = id_league
+        # manual
         self.columns = [
                     'id_user', 'id_league', 'name', 'last_name', 'last_last_name',
                     'city', 'suburb', 'street', 'no', 'phone', 'email', 'password', 'job'
-                ]
+        ]
 
     def valid_user(self, sql):
         response = sql.read('Usr', ['*'], "email='{}'".format(self.email))
@@ -42,16 +43,19 @@ class User():
             return True
 
     def add(self, sql):
+        # nombre de la tabla, id
         self.id_user = sql.next_ID('Usr', 'id_user') + 1
 
         args = [
             self.id_user, self.id_league, self.name, self.last_name, self.last_last_name,
             self.city, self.suburb, self.street, self.no, self.phone, self.email, self.password, self.ocupation
         ]
+        # create(Nombre de la tabla, ...)
         sql.create('Usr', self.columns, args)
         sql.commit()
 
     def delete(self, sql):
+
         sql.delete('Usr', 'id_user={}'.format(self.id_user))
         sql.commit()
 
