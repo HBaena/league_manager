@@ -598,7 +598,6 @@ class WAddUser(Gtk.Window):
             "clicked", lambda button, parent, present:
             go_back(parent, present), self.parent, self)
         self.builder.get_object("button_add").connect("clicked", self.on_add_button_pressed)
-
         # combobox
         combo_job = self.builder.get_object("combobox_job")
         job_list = Gtk.ListStore(str)
