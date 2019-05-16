@@ -2,7 +2,7 @@ import gi
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
-from data_structs import User, League
+from data_structs import *
 
 
 def doc(o):
@@ -125,8 +125,8 @@ def go_to_view_player(parent, sql):
     transfer(parent, WViewPlayer(parent, sql))
 
 
-def go_to_add_team(parent, sql):
-    transfer(parent, WAddTeam(parent, sql))
+def go_to_add_team(parent, sql, team=None):
+    transfer(parent, WAddTeam(parent, sql, team))
 
 
 def go_to_add_player(parent, sql):
@@ -401,10 +401,21 @@ class WAdminManager(Gtk.Window):
         self.builder.get_object("serachentry_global").connect("search-changed", self.on_search_changed)
 
         # treeviewlist
+        # users
         users = self.builder.get_object("treeview_user")
         headers = ["Nombre", "Apellido paterno", "Apellido materno", "Ciudad", "Usuario", "Contraseña"]
         list_model = Gtk.ListStore(str, str, str, str, str, str)
         data = self.DB_connection.read("Usr", ["name", "last_name", "last_last_name", "city", "email", "password"])
+        fill_tree_view_list(headers, data, list_model, users)
+        # players
+        users = self.builder.get_object("treeview_player")
+        headers = ["CURP", "Nombre", "Apellido paterno", "Apellido materno", "Ciudad", "Equipo"]
+        list_model = Gtk.ListStore(str, str, str, str, str, str)
+        columns = ["Player.curp", "Player.name", "Player.last_name", "Player.last_last_name", "Player.city", "Team.name"]
+        tables = ["Player", "Team"]
+        condition = "Player.id_team = Team.id_team"
+        data = self.DB_connection.select_tables(tables, columns, condition)
+
         fill_tree_view_list(headers, data, list_model, users)
 
     def on_search_changed(self, entry):
@@ -456,6 +467,9 @@ class WAdminManager(Gtk.Window):
             if active == "User":
                 model, selection = self.builder.get_object("selection_user").get_selected()
                 self.DB_connection.delete('Usr', "email='{}'".format(model[selection][4]))
+            elif active == "Player":
+                model, selection = self.builder.get_object("selection_player").get_selected()
+                self.DB_connection.delete('Player', "curp='{}'".format(model[selection][0]))
             if model is not None:
                 model.remove(selection)
             self.DB_connection.commit()
@@ -520,11 +534,14 @@ class WTeamManager(Gtk.Window):
 class WAddTeam(Gtk.Window):
     """docstring for WindowAdminManager"""
 
-    def __init__(self, parent=None, DB_connection=None):
+    def __init__(self, parent=None, DB_connection=None, team=None):
         Gtk.Window.__init__(self)
         # Setting parent window
         self.parent = parent
         self.DB_connection = DB_connection
+        self.team = team
+        self.builder = None
+        self.layout_main = None
         # Putting max size to the window
         self.maximize()
         # Avoiding resize window 
@@ -554,7 +571,42 @@ class WAddTeam(Gtk.Window):
         self.builder.get_object("button_add").connect("clicked", self.on_add_button_pressed)
 
     def on_add_button_pressed(self, button):
-        print("Hola")
+        teamname = self.builder.get_object("entry_teamname")
+        teamshortname = self.builder.get_object("entry_teamshortname")
+        matchtime = self.builder.get_object("entry_matchtime")
+        matchplace = self.builder.get_object("entry_matchplace")
+        name = self.builder.get_object("entry_name").get_text()
+        last_name = self.builder.get_object("entry_lastname").get_text()
+        last_last_name = self.builder.get_object("entry_llastname").get_text()
+        city = self.builder.get_object("entry_city").get_text()
+        suburb = self.builder.get_object("entry_suburb").get_text()
+        street = self.builder.get_object("entry_street").get_text()
+        number = self.builder.get_object("entry_number").get_text()
+        phonenumber = self.builder.get_object("entry_phonenumber").get_text()
+        email = self.builder.get_object("entry_email").get_text()
+        password = self.builder.get_object("entry_password").get_text()
+        password2 = self.builder.get_object("entry_password2").get_text()
+        entries = [teamname, teamshortname, matchplace, matchtime, name, last_name, last_last_name, city, suburb,
+                   street, number, phonenumber, email, password, password2]
+        if check_void(entries):
+            DialogOK("Debe ingresar todos los datos")
+            return
+        if password != password2:
+            DialogOK("La contraseña no coincide")
+            self.builder.get_object("entry_password").set_text("")
+            self.builder.get_object("entry_password2").set_text("")
+            return
+        if User(email).valid_user(self.DB_connection):
+            DialogOK("El usuario/email ya está registrado.")
+            self.builder.get_object("entry_email").set_text("")
+            return
+        user = User(email, password, name, last_name, last_last_name, city, suburb, street, number, phonenumber,
+                    'manager', id_league=1)
+        user.add(self.DB_connection)
+        team = Team(teamname, teamshortname, matchplace, id_dt=user.id_user)
+        team.add(self.DB_connection)
+        DialogOK("Se ha aañadido correctamente el equipo y DT.")
+        self.onDestroy()
 
     def onDestroy(self, *args):
         go_back(self.parent, self)

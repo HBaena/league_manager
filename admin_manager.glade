@@ -147,12 +147,12 @@
                     <property name="can_focus">True</property>
                     <property name="shadow_type">in</property>
                     <child>
-                      <object class="GtkTreeView" id="treview_player">
+                      <object class="GtkTreeView" id="treeview_player">
                         <property name="height_request">200</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <child internal-child="selection">
-                          <object class="GtkTreeSelection"/>
+                          <object class="GtkTreeSelection" id="selection_player"/>
                         </child>
                       </object>
                     </child>

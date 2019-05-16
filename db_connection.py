@@ -45,17 +45,22 @@ def list2assignments(columns, values):
 class SQLConnection():
     """docstring for SQL_Connection"""
 
-    def __init__(self, driver, server_name, db_name, UID, PWD):
+    def __init__(self, driver='', server_name='', db_name='', UID='', PWD='', connection_str=''):
+        self.connection_str = ''
         self.connection = None
         self.cursor = None
-        self.driver = "{ODBC Driver 17 for SQL Server}" if driver is None else driver
-        self.server_name = server_name
-        self.db_name = db_name
-        self.UID = UID
-        self.connection_str = "DRIVER={};".format(self.driver)
-        self.connection_str += "Server={};".format(self.server_name)
-        self.connection_str += "Database={};".format(self.db_name)
-        self.connection_str += "UID={};".format(self.UID)
+        if connection_str == '':
+            self.driver = "{ODBC Driver 17 for SQL Server}" if driver is None else driver
+            self.server_name = server_name
+            self.db_name = db_name
+            self.UID = UID
+            self.connection_str = "DRIVER={};".format(self.driver)
+            self.connection_str += "Server={};".format(self.server_name)
+            self.connection_str += "Database={};".format(self.db_name)
+            self.connection_str += "UID={};".format(self.UID)
+        else:
+            self.connection_str = connection_str
+
         try:
             self.connection = pyodbc.connect(
                 self.connection_str + "PWD=" + PWD + ";")
