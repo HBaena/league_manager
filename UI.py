@@ -578,13 +578,34 @@ class WAdminManager(Gtk.Window):
             model, selection = None, None
             if active == "User":
                 model, selection = self.builder.get_object("selection_user").get_selected()
+                if selection is None:
+                    return
                 self.DB_connection.delete('Usr', "email='{}'".format(model[selection][4]))
             elif active == "Player":
                 model, selection = self.builder.get_object("selection_player").get_selected()
+                if selection is None:
+                    return
                 self.DB_connection.delete('Player', "curp='{}'".format(model[selection][0]))
             elif active == "Team":
                 model, selection = self.builder.get_object("selection_team").get_selected()
+                if selection is None:
+                    return
+                dt = self.DB_connection.read("Team", ["id_dt"], "id_team={}".format(model[selection][0]))[0][0]
                 self.DB_connection.delete('Team', "id_team='{}'".format(model[selection][0]))
+                name = self.DB_connection.read("Usr", ["email"], "id_user={}".format(dt))[0][0]
+                tmp = self.builder.get_object("treeview_user").get_model()
+                self.DB_connection.delete('Usr', "id_user={}".format(dt))
+                self.DB_connection.delete('Player', "id_team='{}'".format(model[selection][0]))
+                for sel in tmp:
+                    if tmp[sel.iter][4] == name:
+                        tmp.remove(sel.iter)
+                        break
+                tmp = self.builder.get_object("treeview_player").get_model()
+                for sel in tmp:
+                    if tmp[sel.iter][5] == model[selection][1]:
+                        tmp.remove(sel.iter)
+
+
 
             if model is not None:
                 model.remove(selection)
