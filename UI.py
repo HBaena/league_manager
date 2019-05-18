@@ -687,10 +687,10 @@ class WAddTeam(Gtk.Window):
         self.builder.get_object("button_add").connect("clicked", self.on_add_button_pressed)
 
     def on_add_button_pressed(self, button):
-        teamname = self.builder.get_object("entry_teamname")
-        teamshortname = self.builder.get_object("entry_teamshortname")
-        matchtime = self.builder.get_object("entry_matchtime")
-        matchplace = self.builder.get_object("entry_matchplace")
+        teamname = self.builder.get_object("entry_teamname").get_text()
+        teamshortname = self.builder.get_object("entry_teamshortname").get_text()
+        matchtime = self.builder.get_object("entry_matchtime").get_text()
+        matchplace = self.builder.get_object("entry_matchplace").get_text()
         name = self.builder.get_object("entry_name").get_text()
         last_name = self.builder.get_object("entry_lastname").get_text()
         last_last_name = self.builder.get_object("entry_llastname").get_text()
@@ -716,11 +716,20 @@ class WAddTeam(Gtk.Window):
             DialogOK("El usuario/email ya está registrado.")
             self.builder.get_object("entry_email").set_text("")
             return
-        user = User(email, password, name, last_name, last_last_name, city, suburb, street, number, phonenumber,
-                    'manager', id_league=1)
+        user = User(email=email, password=password, name=name, last_name=last_name, last_last_name=last_last_name,
+                    city=city, suburb=suburb, street=street, no=number, phone=phonenumber,
+                    ocupation='manager', id_league=1)
+
         user.add(self.DB_connection)
         team = Team(teamname, teamshortname, matchplace, id_dt=user.id_user)
         team.add(self.DB_connection)
+        model = self.parent.builder.get_object("treeview_team").get_model()
+        model.append([team.id_team, team.name, team.short_name, team.local_place, user.name, user.last_name])
+        model = self.parent.builder.get_object("treeview_user").get_model()
+        model.append(
+            [user.name, user.last_name, user.last_last_name, user.city, user.email,
+             user.password, user.ocupation])
+
         DialogOK("Se ha aañadido correctamente el equipo y DT.")
         self.onDestroy()
 
@@ -824,11 +833,11 @@ class WAddUser(Gtk.Window):
         user = User(email)
 
         if job == 'Admin':
-            self.user.ocupation = 'admin'
+            user.ocupation = 'admin'
         elif job == 'DT':
-            self.user.ocupation = 'manager'
+            user.ocupation = 'manager'
         elif job == 'Árbitro':
-            self.user.ocupation = 'referee'
+            user.ocupation = 'referee'
 
         if button.get_label() == "Modificar":
             self.user.email = email
@@ -862,6 +871,10 @@ class WAddUser(Gtk.Window):
                         job)
             user.add(self.DB_connection)
             DialogOK("Se ha agregado con éxito.")
+            model = self.parent.builder.get_object("treeview_user").get_model()
+            model.append(
+                [user.name, user.last_name, user.last_last_name, user.city, user.email,
+                 user.password, user.ocupation])
         self.onDestroy()
 
     def onDestroy(self, *args):
@@ -961,7 +974,9 @@ class WAddPlayer(Gtk.Window):
         player.id_team = id_team
         player.add(self.DB_connection)
         DialogOK("Se ha añadido el jugador con éxito.")
-
+        model = self.parent.builder.get_object("treeview_player").get_model()
+        model.append([player.curp, player.name, player.last_name, player.last_last_name,
+                      player.city, team])
         self.onDestroy()
 
     def on_modify_button_pressed(self, button):
