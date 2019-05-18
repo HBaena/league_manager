@@ -125,8 +125,8 @@ def go_to_view_player(parent, sql, player=None):
     transfer(parent, WViewPlayer(parent, sql, player))
 
 
-def go_to_add_team(parent, sql, team=None):
-    transfer(parent, WAddTeam(parent, sql, team))
+def go_to_add_team(parent, sql, team=None, dt=None):
+    transfer(parent, WAddTeam(parent, sql, team, dt))
 
 
 def go_to_add_player(parent, sql, player=None):
@@ -534,11 +534,8 @@ class WAdminManager(Gtk.Window):
 
     def on_modify_button_pressed(self, button):
         active = self.builder.get_object("stack").get_visible_child().get_name()
-
         if active == "Tournament":
             go_to_add_tournament(self, self.DB_connection)
-        elif active == "Team":
-            go_to_add_team(self, self.DB_connection)
         elif active == "Player":
             model, selection = self.builder.get_object("selection_player").get_selected()
 
@@ -564,8 +561,23 @@ class WAdminManager(Gtk.Window):
             user = User(last_name=data[0], last_last_name=data[1], name=data[2], phone=data[3], city=data[4],
                         suburb=data[5], street=data[6], no=str(data[7]), email=data[8], password=data[9],
                         ocupation=data[10], id_user=data[11])
-
             go_to_add_user(self, self.DB_connection, user)
+        elif active == "Team":
+            model, selection = self.builder.get_object("selection_team").get_selected()
+            if selection is None:
+                return
+
+            data = self.DB_connection.read("Team", ["name", "nick_name", "local_place", "id_team", "id_dt"],
+                                           "id_team={}".format(model[selection][0]))[0]
+            team = Team(name=data[0], short_name=data[1], local_place=data[2], id_team=data[3], id_dt=data[4])
+            data = self.DB_connection.read("Usr",
+                                           ["last_name", "last_last_name", "name", "phone", "city", "suburb", "street",
+                                            "no", "email", "password", "id_user"])[0]
+            dt = User(last_name=data[0], last_last_name=data[1], name=data[2], phone=data[3], city=data[4],
+                      suburb=data[5], street=data[6], no=data[7], email=data[8], password=data[8],
+                      id_user=data[9], ocupation="manager")
+
+            go_to_add_team(self, self.DB_connection, team, dt)
             return
         elif active == "Match":
             go_to_add_match(self, self.DB_connection)
@@ -677,12 +689,13 @@ class WTeamManager(Gtk.Window):
 class WAddTeam(Gtk.Window):
     """docstring for WindowAdminManager"""
 
-    def __init__(self, parent=None, DB_connection=None, team=None):
+    def __init__(self, parent=None, DB_connection=None, team=None, dt=None):
         Gtk.Window.__init__(self)
         # Setting parent window
         self.parent = parent
         self.DB_connection = DB_connection
         self.team = team
+        self.dt = dt
         self.builder = None
         self.layout_main = None
         # Putting max size to the window
@@ -713,7 +726,28 @@ class WAddTeam(Gtk.Window):
             go_back(parent, present), self.parent, self)
         self.builder.get_object("button_add").connect("clicked", self.on_add_button_pressed)
 
+        if self.team is not None:
+            self.builder.get_object("entry_teamname").set_text(self.team.name)
+            self.builder.get_object("entry_teamshortname").set_text(self.team.short_name)
+            self.builder.get_object("entry_matchplace").set_text(self.team.local_place)
+            self.builder.get_object("entry_matchtime").set_text("0")
+            self.builder.get_object("entry_name").set_text(self.dt.name)
+            self.builder.get_object("entry_lastname").set_text(self.dt.last_name)
+            self.builder.get_object("entry_llastname").set_text(self.dt.last_last_name)
+            self.builder.get_object("entry_city").set_text(self.dt.city)
+            self.builder.get_object("entry_suburb").set_text(self.dt.suburb)
+            self.builder.get_object("entry_street").set_text(self.dt.street)
+            self.builder.get_object("entry_number").set_text(str(self.dt.no))
+            self.builder.get_object("entry_phonenumber").set_text(self.dt.phone)
+            self.builder.get_object("entry_email").set_text(self.dt.email)
+            self.builder.get_object("entry_password").set_text(self.dt.password)
+            self.builder.get_object("entry_password2").set_text(self.dt.password)
+            self.builder.get_object("button_add").set_label("Modificar")
+
     def on_add_button_pressed(self, button):
+        if button.get_label() == "Modificar":
+            return
+
         teamname = self.builder.get_object("entry_teamname").get_text()
         teamshortname = self.builder.get_object("entry_teamshortname").get_text()
         matchtime = self.builder.get_object("entry_matchtime").get_text()
