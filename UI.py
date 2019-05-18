@@ -113,8 +113,8 @@ def go_to_admin_manager(parent, sql):
     transfer(parent, WAdminManager(parent, sql))
 
 
-def go_to_team_manager(parent, sql):
-    transfer(parent, WTeamManager(parent, sql))
+def go_to_team_manager(parent, sql, team=None):
+    transfer(parent, WTeamManager(parent, sql, team))
 
 
 def go_to_view_team(parent, sql, team=None):
@@ -257,7 +257,11 @@ class WMain(Gtk.Window):
         elif user.ocupation == 'referee':
             pass
         elif user.ocupation == 'manager':
-            go_to_team_manager(self, self.DB_connection)
+            condition = "SELECT id_user FROM Usr WHERE email='{}'".format(user.email)
+            data = self.DB_connection.read("Team", ["*"], "id_dt=({})".format(condition))[0]
+            print(data)
+
+            # go_to_team_manager(self, self.DB_connection)
 
     def on_tournament_changed(self, combo):
         print(combo)
@@ -640,10 +644,12 @@ class WAdminManager(Gtk.Window):
 class WTeamManager(Gtk.Window):
     """docstring for WindowAdminManager"""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, DB_connection=None, team=None):
         Gtk.Window.__init__(self)
         # Setting parent window
         self.parent = parent
+        self.DB_connection = DB_connection
+        self.team = team
         # Putting max size to the window
         self.maximize()
         # Avoiding resize window 
@@ -665,6 +671,21 @@ class WTeamManager(Gtk.Window):
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
         self.add(self.layout_main)
+        # LABELS
+        self.builder.get_object("label_fullname").set_text(self.team.name)
+        self.builder.get_object("label_goals").set_text(str(self.team.goals))
+        self.builder.get_object("label_goals_conceded").set_text(str(self.team.goals_conceded))
+        self.builder.get_object("label_goalsdifference").set_text(str(self.team.goals - self.team.goals_conceded))
+        self.builder.get_object("label_win").set_text(str(self.team.win))
+        self.builder.get_object("label_lost").set_text(str(self.team.lost))
+        self.builder.get_object("label_draw").set_text(str(self.team.draw))
+        self.builder.get_object("label_total").set_text(str(self.team.draw + self.team.lost + self.team.win))
+        self.builder.get_object("label_totalpoints").set_text(str(self.team.draw + 3 * self.team.win))
+        # TREEVIEWLIST
+        headers = ["CURP", "Nombre", "Apellido paterno", "Apellido materno", "Ciudad"]
+        data = self.team.get_players(self.DB_connection)
+        model = Gtk.ListStore(str, str, str, str, str)
+        fill_tree_view_list(headers, data, model, self.builder.get_object("treeview_player"))
 
         # BUTTON
         self.builder.get_object("button_back").connect(
@@ -676,16 +697,25 @@ class WTeamManager(Gtk.Window):
         self.builder.get_object("button_delete").connect("clicked", self.on_delete_button_pressed)
 
     def on_add_button_pressed(self, button):
-        print("Hola")
+        go_to_add_player(self, self.DB_connection)
 
     def on_modify_button_pressed(self, button):
-        print("Hola")
+        model, selection = self.builder.get_object("selection_player").get_selected()
+        if selection is None:
+            return
+        dialog = DialogConfirm(self, "Delete?", "¿Está seguro de eliminar al jugador seleccionado?")
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            self.DB_connection.delete('Player', "curp='{}'".format(model[selection][0]))
+            model.remove(selection)
 
-    def on_delete_button_pressed(self, button):
-        print("Hola")
 
-    def onDestroy(self, *args):
-        go_back(self.parent, self)
+def on_delete_button_pressed(self, button):
+    model, selection = self.builder.get_object("selection_player").get_selected()
+
+
+def onDestroy(self, *args):
+    go_back(self.parent, self)
 
 
 class WAddTeam(Gtk.Window):
@@ -818,7 +848,9 @@ class WAddTeam(Gtk.Window):
             model = self.parent.builder.get_object("treeview_user").get_model()
             for sel in model:
                 if model[sel.iter][4] == self.dt.email:
+                    old = self.dt.email
                     self.dt.email = email
+                    self.dt.update(self.DB_connection, old)
                     model[sel.iter][0] = self.dt.name
                     model[sel.iter][1] = self.dt.last_name
                     model[sel.iter][2] = self.dt.last_last_name
@@ -826,7 +858,6 @@ class WAddTeam(Gtk.Window):
                     model[sel.iter][4] = self.dt.email
                     model[sel.iter][5] = self.dt.password
                     break
-            self.dt.update(self.DB_connection)
             self.team.update(self.DB_connection)
             DialogOK("Se ha modificado correctamente el equipo y DT.")
             self.onDestroy()
@@ -942,7 +973,7 @@ class WAddUser(Gtk.Window):
             user.ocupation = 'referee'
 
         if button.get_label() == "Modificar":
-            self.user.email = email
+            old = self.user.email
             self.user.password = password
             self.user.name = name
             self.user.last_name = last_name
@@ -952,7 +983,7 @@ class WAddUser(Gtk.Window):
             self.user.street = street
             self.user.no = number
             self.user.phone = phonenumber
-            self.user.update(self.DB_connection)
+            self.user.email = email
             DialogOK("Se ha modificado con éxito.")
             model, selection = self.parent.builder.get_object("selection_user").get_selected()
             model[selection][0] = self.user.name
@@ -962,6 +993,7 @@ class WAddUser(Gtk.Window):
             model[selection][4] = self.user.email
             model[selection][5] = self.user.password
             model[selection][6] = self.user.ocupation
+            self.user.update(self.DB_connection, old)
         else:
             if user.valid_user(self.DB_connection):
                 DialogOK("El e-mail ya está registrado.")

@@ -56,12 +56,14 @@ class User():
         sql.delete('Usr', 'id_user={}'.format(self.id_user))
         sql.commit()
 
-    def update(self, sql):
+    def update(self, sql, old=None):
+        if old is None:
+            old = self.email
         args = [
             str(self.id_user), str(self.id_league), self.name, self.last_name, self.last_last_name,
             self.city, self.suburb, self.street, str(self.no), self.phone, self.email, self.password, self.ocupation
         ]
-        sql.update('Usr', self.columns, args, "email='{}'".format(self.email))
+        sql.update('Usr', self.columns, args, "email='{}'".format(old))
         sql.commit()
 
     def fill_data(self, data):
