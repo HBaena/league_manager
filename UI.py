@@ -978,6 +978,12 @@ class WAddPlayer(Gtk.Window):
         self.player.street = entries[6]
         self.player.no = entries[7]
         self.player.update(self.DB_connection)
+        model, selection = self.parent.builder.get_object("selection_player").get_selected()
+        model[selection][0] = self.player.curp
+        model[selection][1] = self.player.name
+        model[selection][2] = self.player.last_name
+        model[selection][3] = self.player.last_last_name
+        model[selection][4] = self.player.city
         DialogOK("Se ha modificado la información con éxito.")
         self.onDestroy()
 
