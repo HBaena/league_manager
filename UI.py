@@ -260,8 +260,9 @@ class WMain(Gtk.Window):
             condition = "SELECT id_user FROM Usr WHERE email='{}'".format(user.email)
             data = self.DB_connection.read("Team", ["*"], "id_dt=({})".format(condition))[0]
             print(data)
-
-            # go_to_team_manager(self, self.DB_connection)
+            team = Team(id_team=data[0], name=data[1], short_name=data[2], local_place=data[3], id_dt=data[4],
+                        goals=data[5], goals_conceded=data[6], win=data[7], lost=data[8], draw=data[9])
+            go_to_team_manager(self, self.DB_connection, team)
 
     def on_tournament_changed(self, combo):
         print(combo)
@@ -703,19 +704,29 @@ class WTeamManager(Gtk.Window):
         model, selection = self.builder.get_object("selection_player").get_selected()
         if selection is None:
             return
+        data = self.DB_connection.read("Player",
+                                       ["id_player", "last_name", "last_last_name", "name", "curp", "city",
+                                        "suburb", "street",
+                                        "no"],
+                                       "curp='{}'".format(model[selection][0]))[0]
+        player = Player(id_player=data[0], last_name=data[1], last_last_name=data[2], name=data[3],
+                        curp=data[4], city=data[5], suburb=data[6], street=data[7], no=int(data[8]))
+        go_to_add_player(self, self.DB_connection, player)
+
+    def on_delete_button_pressed(self, button):
+        model, selection = self.builder.get_object("selection_player").get_selected()
+        if selection is None:
+            return
         dialog = DialogConfirm(self, "Delete?", "¿Está seguro de eliminar al jugador seleccionado?")
         response = dialog.run()
+        dialog.destroy()
+
         if response == Gtk.ResponseType.OK:
             self.DB_connection.delete('Player', "curp='{}'".format(model[selection][0]))
             model.remove(selection)
 
-
-def on_delete_button_pressed(self, button):
-    model, selection = self.builder.get_object("selection_player").get_selected()
-
-
-def onDestroy(self, *args):
-    go_back(self.parent, self)
+    def onDestroy(self, *args):
+        go_back(self.parent, self)
 
 
 class WAddTeam(Gtk.Window):
@@ -1070,6 +1081,8 @@ class WAddPlayer(Gtk.Window):
             self.builder.get_object("entry_playernumber").set_text(str(self.player.no))
             self.builder.get_object("combobox_team").set_visible(False)
             self.builder.get_object("button_add").set_label("Modificar")
+        if self.parent.__class__ == WTeamManager:
+            combobox_team.set_visible(False)
 
     def _get_entries(self):
         last_name = self.builder.get_object("entry_last_name").get_text()
@@ -1103,14 +1116,23 @@ class WAddPlayer(Gtk.Window):
 
         model = self.builder.get_object("combobox_team").get_model()
         selection = self.builder.get_object("combobox_team").get_active_iter()
-        team = model[selection][0]
-        id_team = self.DB_connection.read("Team", ["id_team"], "nick_name='{}'".format(team))[0][0]
+        id_team = None
+        if self.parent != WTeamManager:
+            team = model[selection][0]
+            id_team = self.DB_connection.read("Team", ["id_team"], "nick_name='{}'".format(team))[0][0]
+        else:
+            id_team = self.parent.team.id_team
+
         player.id_team = id_team
         player.add(self.DB_connection)
         DialogOK("Se ha añadido el jugador con éxito.")
         model = self.parent.builder.get_object("treeview_player").get_model()
-        model.append([player.curp, player.name, player.last_name, player.last_last_name,
-                      player.city, team])
+        if self.parent.__class__ == WAdminManager:
+            model.append([player.curp, player.name, player.last_name, player.last_last_name,
+                          player.city, team])
+        else:
+            model.append([player.curp, player.name, player.last_name, player.last_last_name,
+                          player.city])
         self.onDestroy()
 
     def on_modify_button_pressed(self, button):
