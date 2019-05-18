@@ -3,7 +3,7 @@ class User():
 
     def __init__(self, email='None', password='None', name='None',
                  last_name='None', last_last_name='None', city='None', suburb='None',
-                 street='None', no=0, phone='None', ocupation='admin', id_user=0, id_league='1'):
+                 street='None', no=0, phone='0', ocupation='admin', id_user=0, id_league='1'):
         self.id_user = id_user
         self.password = password
         self.name = name
@@ -24,9 +24,7 @@ class User():
         ]
 
     def valid_user(self, sql):
-        response = sql.read('Usr', ['*'], "email='{}'".format(self.email))
-        print("Response:", response)
-        if response == []:
+        if sql.read('Usr', ['*'], "email='{}'".format(self.email)) == []:
             return False
         else:
             return True
@@ -85,17 +83,63 @@ class Player():
     """docstring for Player"""
 
     def __init__(self, id_player='', name='', last_name='',
-                 last_last_name='', CURP='', city='', suburb='',
-                 street='', no=''):
+                 last_last_name='', curp='', city='', suburb='',
+                 street='', no='0', id_team='1', expulsions='0',
+                 reprimands='0', goals='0', appearances='0'):
         self.id_player = id_player
         self.name = name
         self.last_name = last_name
         self.last_last_name = last_last_name
-        self.CURP = CURP
+        self.curp = curp
         self.city = city
         self.suburb = suburb
         self.street = street
         self.no = no
+        self.id_team = id_team
+        self.expulsions = expulsions
+        self.reprimands = reprimands
+        self.goals = goals
+        self.appearances = appearances
+
+        self.columns = [
+            'id_player', 'name', 'last_name', 'last_last_name', 'curp',
+            'city', 'suburb', 'street', 'no', 'id_team', 'expulsions', 'reprimands',
+            'goals', 'appearances'
+        ]
+
+    def valid_curp(self, sql):
+        if sql.read('Player', ['*'], "curp='{}'".format(self.curp)) == []:
+            return False
+        else:
+            return True
+
+    def get_team(self, sql):
+        return sql.read('Team', ["name"], "id_team={}".format(self.id_team))[0][0]
+
+    def add(self, sql):
+        # nombre de la tabla, id
+        self.id_player = sql.next_ID('Player', 'id_player') + 1
+
+        args = [
+            self.id_player, self.name, self.last_name, self.last_last_name,
+            self.curp, self.city, self.suburb, self.street, self.no, self.id_team, self.expulsions,
+            self.reprimands, self.goals, self.appearances
+        ]
+        sql.create('Player', self.columns, args)
+        sql.commit()
+
+    def delete(self, sql):
+        sql.delete('Player', 'id_player={}'.format(self.id_player))
+        sql.commit()
+
+    def update(self, sql):
+        args = [
+            self.id_player, self.name, self.last_name, self.last_last_name,
+            self.curp, self.city, self.suburb, self.street, self.no, self.id_team, self.expulsions,
+            self.reprimands, self.goals, self.appearances
+        ]
+        sql.update('Player', self.columns, args, 'id_player={}'.format(self.id_player))
+        sql.commit()
 
 
 class League():
@@ -168,22 +212,36 @@ class Team():
     """docstring for Team"""
 
     def __init__(self, name='', short_name='',
-                 local_place='', id_team='', id_dt=''):
+                 local_place='', id_team='', id_dt='', goals=0, goals_conceded=0, win=0, lost=0, draw=0):
         self.id_team = id_team
         self.name = name
         self.short_name = short_name
         self.local_place = local_place
         self.id_dt = id_dt
-        self.columns = ['id_team', 'name', 'nick_name', 'local_place', 'id_dt']
+        self.goals = goals
+        self.goals_conceded = goals_conceded
+        self.win = win
+        self.lost = lost
+        self.draw = draw
+        self.columns = ['id_team', 'name', 'nick_name', 'local_place', 'id_dt', 'goals', 'goals_conceded', 'win',
+                        'lost', 'draw']
         self.args = None
 
-    def refresh_args(self):
-        self.args = [self.id_team, self.name, self.short_name, self.local_place, self.id_dt]
+    def get_players(self, sql):
+        return sql.read("Player", ["curp", "name", "last_name", "last_last_name", "city"],
+                        "id_team = '{}'".format(self.id_team))
+
+    def get_dt(self, sql):
+        return sql.read("User", ["*"], "id_user = '{}'".format(self.id_dt))
+
+    def __refresh_args(self):
+        self.args = [self.id_team, self.name, self.short_name, self.local_place, self.id_dt, self.goals,
+                     self.goals_conceded, self.win, self.lost, self.draw]
 
     def add(self, sql):
         # nombre de la tabla, id
         self.id_team = sql.next_ID('Team', 'id_team') + 1
-        self.refresh_args()
+        self.__refresh_args()
         # create(Nombre de la tabla, ...)
         sql.create('Team', self.columns, self.args)
         sql.commit()
@@ -193,12 +251,13 @@ class Team():
         sql.commit()
 
     def update(self, sql):
-        self.refresh_args()
+        self.__refresh_args()
         sql.update('Team', self.columns, self.args, 'id_team={}'.format(self.id_team))
         sql.commit()
 
     class DetailTournament():
         """docstring for DetailTournament"""
+
         def __init__(self, id_detail=0, id_tournament=0, id_team=0):
             self.id_detail = id_detail
             self.id_tournament = id_tournament

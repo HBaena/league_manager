@@ -120,7 +120,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label_scoredgoals">
+              <object class="GtkLabel" id="label_goals">
                 <property name="name">label_h3</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -134,7 +134,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label_goalsagainst">
+              <object class="GtkLabel" id="label_goals_conceded">
                 <property name="name">label_h3</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -148,7 +148,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="lavel_goalsdifference">
+              <object class="GtkLabel" id="label_goalsdifference">
                 <property name="name">label_h3</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -204,7 +204,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label_winmatches">
+              <object class="GtkLabel" id="label_win">
                 <property name="name">label_h3</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -218,7 +218,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label_drawmatches">
+              <object class="GtkLabel" id="label_draw">
                 <property name="name">label_h3</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -232,7 +232,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label_lostmatches">
+              <object class="GtkLabel" id="label_lost">
                 <property name="name">label_h3</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -260,7 +260,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label_totalmatches">
+              <object class="GtkLabel" id="label_total">
                 <property name="name">label_h3</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -325,7 +325,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <child internal-child="selection">
-                      <object class="GtkTreeSelection"/>
+                      <object class="GtkTreeSelection" id="selection_player"/>
                     </child>
                   </object>
                 </child>
@@ -381,7 +381,18 @@
               </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkButton" id="button_select">
+                <property name="label" translatable="yes">Regresar</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="halign">start</property>
+                <property name="valign">center</property>
+              </object>
+              <packing>
+                <property name="left_attach">2</property>
+                <property name="top_attach">12</property>
+              </packing>
             </child>
             <child>
               <placeholder/>
