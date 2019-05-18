@@ -555,16 +555,20 @@ class WAdminManager(Gtk.Window):
         elif active == "User":
             # go_to_add_user(self, self.DB_connection)
             model, selection = self.builder.get_object("selection_user").get_selected()
-            if model[selection] is None:
+            if selection is None:
                 return
-            user = User(data[10], data[11], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9],
-                        data[12], data[0], data[1])
+            data = self.DB_connection.read("Usr",
+                                           ["last_name", "last_last_name", "name", "phone", "city", "suburb", "street",
+                                            "no", "email", "password", "job", "id_user"],
+                                           "email='{}'".format(model[selection][4]))[0]
+            user = User(last_name=data[0], last_last_name=data[1], name=data[2], phone=data[3], city=data[4],
+                        suburb=data[5], street=data[6], no=str(data[7]), email=data[8], password=data[9],
+                        ocupation=data[10], id_user=data[11])
+
             go_to_add_user(self, self.DB_connection, user)
             return
         elif active == "Match":
             go_to_add_match(self, self.DB_connection)
-
-        self.builder.get_object("selection_user").unselect_all()
 
     def on_delete_button_pressed(self, button):
         active = self.builder.get_object("stack").get_visible_child().get_name()
@@ -780,23 +784,25 @@ class WAddUser(Gtk.Window):
             self.builder.get_object("entry_email").set_text(self.user.email)
             self.builder.get_object("entry_password").set_text(self.user.password)
             self.builder.get_object("entry_password2").set_text(self.user.password)
+
             if self.user.ocupation == 'admin':
                 self.builder.get_object("combobox_job").set_active(0)
             elif self.user.ocupation == 'manager':
                 self.builder.get_object("combobox_job").set_active(1)
             elif self.user.ocupation == 'referee':
                 self.builder.get_object("combobox_job").set_active(2)
+
             self.builder.get_object("button_add").set_label("Modificar")
 
     def on_add_button_pressed(self, button):
-        name = self.builder.get_object("entry_name").get_text().uppercase()
-        last_name = self.builder.get_object("entry_lastname").get_text().uppercase()
-        last_last_name = self.builder.get_object("entry_llastname").get_text().uppercase()
-        city = self.builder.get_object("entry_city").get_text().uppercase()
-        suburb = self.builder.get_object("entry_suburb").get_text().uppercase()
-        street = self.builder.get_object("entry_street").get_text().uppercase()
+        name = self.builder.get_object("entry_name").get_text()
+        last_name = self.builder.get_object("entry_lastname").get_text()
+        last_last_name = self.builder.get_object("entry_llastname").get_text()
+        city = self.builder.get_object("entry_city").get_text()
+        suburb = self.builder.get_object("entry_suburb").get_text()
+        street = self.builder.get_object("entry_street").get_text()
         number = self.builder.get_object("entry_number").get_text()
-        phonenumber = self.builder.get_object("entry_phonenumber").get_text().uppercase()
+        phonenumber = self.builder.get_object("entry_phonenumber").get_text()
         email = self.builder.get_object("entry_email").get_text()
         password = self.builder.get_object("entry_password").get_text()
         password2 = self.builder.get_object("entry_password2").get_text()
@@ -837,6 +843,14 @@ class WAddUser(Gtk.Window):
             self.user.phone = phonenumber
             self.user.update(self.DB_connection)
             DialogOK("Se ha modificado con éxito.")
+            model, selection = self.parent.builder.get_object("selection_user").get_selected()
+            model[selection][0] = self.user.name
+            model[selection][1] = self.user.last_name
+            model[selection][2] = self.user.last_last_name
+            model[selection][3] = self.user.city
+            model[selection][4] = self.user.email
+            model[selection][5] = self.user.password
+            model[selection][6] = self.user.ocupation
         else:
             if user.valid_user(self.DB_connection):
                 DialogOK("El e-mail ya está registrado.")
@@ -947,6 +961,7 @@ class WAddPlayer(Gtk.Window):
         player.id_team = id_team
         player.add(self.DB_connection)
         DialogOK("Se ha añadido el jugador con éxito.")
+
         self.onDestroy()
 
     def on_modify_button_pressed(self, button):
