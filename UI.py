@@ -1117,7 +1117,7 @@ class WAddPlayer(Gtk.Window):
         model = self.builder.get_object("combobox_team").get_model()
         selection = self.builder.get_object("combobox_team").get_active_iter()
         id_team = None
-        if self.parent != WTeamManager:
+        if self.parent.__class__ == WAdminManager:
             team = model[selection][0]
             id_team = self.DB_connection.read("Team", ["id_team"], "nick_name='{}'".format(team))[0][0]
         else:
