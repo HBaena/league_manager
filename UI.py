@@ -590,22 +590,28 @@ class WAdminManager(Gtk.Window):
                 model, selection = self.builder.get_object("selection_team").get_selected()
                 if selection is None:
                     return
+                # Getting dt id from the team
                 dt = self.DB_connection.read("Team", ["id_dt"], "id_team={}".format(model[selection][0]))[0][0]
+                # deleting team form db
                 self.DB_connection.delete('Team', "id_team='{}'".format(model[selection][0]))
+                # Getting email of dt-user
                 name = self.DB_connection.read("Usr", ["email"], "id_user={}".format(dt))[0][0]
+                # getting model of treeview_user to remove dt
                 tmp = self.builder.get_object("treeview_user").get_model()
+                # remove dt form db
                 self.DB_connection.delete('Usr', "id_user={}".format(dt))
+                # remove playersfrom db
                 self.DB_connection.delete('Player', "id_team='{}'".format(model[selection][0]))
+                # removing dt from treeview
                 for sel in tmp:
                     if tmp[sel.iter][4] == name:
                         tmp.remove(sel.iter)
                         break
                 tmp = self.builder.get_object("treeview_player").get_model()
+                # removing playersfrom treeview
                 for sel in tmp:
                     if tmp[sel.iter][5] == model[selection][1]:
                         tmp.remove(sel.iter)
-
-
 
             if model is not None:
                 model.remove(selection)
