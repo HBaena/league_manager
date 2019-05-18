@@ -121,6 +121,7 @@ class SQLConnection():
 
         query = "UPDATE {}\nSET {}\nWHERE {};".format(
             table, list2assignments(columns, values), condition)
+        print(query)
         try:
             self.cursor.execute(query)
             return "Success"

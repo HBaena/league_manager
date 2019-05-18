@@ -567,15 +567,17 @@ class WAdminManager(Gtk.Window):
             if selection is None:
                 return
 
-            data = self.DB_connection.read("Team", ["name", "nick_name", "local_place", "id_team", "id_dt"],
+            data = self.DB_connection.read("Team", ["name", "nick_name", "local_place", "id_team", "id_dt", "goals",
+                                                    "goals_conceded", "win", "lost", "draw"],
                                            "id_team={}".format(model[selection][0]))[0]
-            team = Team(name=data[0], short_name=data[1], local_place=data[2], id_team=data[3], id_dt=data[4])
+            team = Team(name=data[0], short_name=data[1], local_place=data[2], id_team=data[3], id_dt=data[4],
+                        goals=data[5], goals_conceded=data[6], win=data[7], lost=data[8], draw=data[9])
             data = self.DB_connection.read("Usr",
                                            ["last_name", "last_last_name", "name", "phone", "city", "suburb", "street",
-                                            "no", "email", "password", "id_user"])[0]
+                                            "no", "email", "password", "id_user"], "id_user='{}'".format(data[4]))[0]
             dt = User(last_name=data[0], last_last_name=data[1], name=data[2], phone=data[3], city=data[4],
-                      suburb=data[5], street=data[6], no=data[7], email=data[8], password=data[8],
-                      id_user=data[9], ocupation="manager")
+                      suburb=data[5], street=data[6], no=data[7], email=data[8], password=data[9],
+                      id_user=data[10], ocupation="manager", id_league='1')
 
             go_to_add_team(self, self.DB_connection, team, dt)
             return
@@ -745,8 +747,6 @@ class WAddTeam(Gtk.Window):
             self.builder.get_object("button_add").set_label("Modificar")
 
     def on_add_button_pressed(self, button):
-        if button.get_label() == "Modificar":
-            return
 
         teamname = self.builder.get_object("entry_teamname").get_text()
         teamshortname = self.builder.get_object("entry_teamshortname").get_text()
@@ -773,23 +773,64 @@ class WAddTeam(Gtk.Window):
             self.builder.get_object("entry_password").set_text("")
             self.builder.get_object("entry_password2").set_text("")
             return
-        if User(email).valid_user(self.DB_connection):
-            DialogOK("El usuario/email ya está registrado.")
-            self.builder.get_object("entry_email").set_text("")
-            return
-        user = User(email=email, password=password, name=name, last_name=last_name, last_last_name=last_last_name,
-                    city=city, suburb=suburb, street=street, no=number, phone=phonenumber,
-                    ocupation='manager', id_league=1)
+        if button.get_label() != "Modificar":
+            if User(email).valid_user(self.DB_connection):
+                DialogOK("El usuario/email ya está registrado.")
+                self.builder.get_object("entry_email").set_text("")
+                return
+            user = User(email=email, password=password, name=name, last_name=last_name, last_last_name=last_last_name,
+                        city=city, suburb=suburb, street=street, no=number, phone=phonenumber,
+                        ocupation='manager', id_league=1)
 
-        user.add(self.DB_connection)
-        team = Team(teamname, teamshortname, matchplace, id_dt=user.id_user)
-        team.add(self.DB_connection)
-        model = self.parent.builder.get_object("treeview_team").get_model()
-        model.append([team.id_team, team.name, team.short_name, team.local_place, user.name, user.last_name])
-        model = self.parent.builder.get_object("treeview_user").get_model()
-        model.append(
-            [user.name, user.last_name, user.last_last_name, user.city, user.email,
-             user.password, user.ocupation])
+            user.add(self.DB_connection)
+            team = Team(teamname, teamshortname, matchplace, id_dt=user.id_user)
+            team.add(self.DB_connection)
+            model = self.parent.builder.get_object("treeview_team").get_model()
+            model.append([team.id_team, team.name, team.short_name, team.local_place, user.name, user.last_name])
+            model = self.parent.builder.get_object("treeview_user").get_model()
+            model.append(
+                [user.name, user.last_name, user.last_last_name, user.city, user.email,
+                 user.password, user.ocupation])
+        else:
+            self.dt.name = name
+            self.dt.last_name = last_name
+            self.dt.last_last_name = last_last_name
+            self.dt.password = password
+            self.dt.city = city
+            self.dt.suburb = suburb
+            self.dt.street = street
+            self.dt.no = number
+            self.dt.phone = phonenumber
+            self.dt.id_league = 1
+            self.team.name = teamname
+            self.team.short_name = teamshortname
+            self.team.local_place = matchplace
+            self.team.id_dt = self.dt.id_user
+            # refreshing team treeview
+            model, selection = self.parent.builder.get_object("selection_team").get_selected()
+            model[selection][1] = self.team.name
+            model[selection][2] = self.team.short_name
+            model[selection][3] = self.team.local_place
+            model[selection][4] = self.dt.name
+            model[selection][5] = self.dt.last_name
+
+            # refreshing user treeview
+            model = self.parent.builder.get_object("treeview_user").get_model()
+            for sel in model:
+                if model[sel.iter][4] == self.dt.email:
+                    self.dt.email = email
+                    model[sel.iter][0] = self.dt.name
+                    model[sel.iter][1] = self.dt.last_name
+                    model[sel.iter][2] = self.dt.last_last_name
+                    model[sel.iter][3] = self.dt.city
+                    model[sel.iter][4] = self.dt.email
+                    model[sel.iter][5] = self.dt.password
+                    break
+            self.dt.update(self.DB_connection)
+            self.team.update(self.DB_connection)
+            DialogOK("Se ha modificado correctamente el equipo y DT.")
+            self.onDestroy()
+            return
 
         DialogOK("Se ha aañadido correctamente el equipo y DT.")
         self.onDestroy()

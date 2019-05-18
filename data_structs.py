@@ -3,7 +3,7 @@ class User():
 
     def __init__(self, email='None', password='None', name='None',
                  last_name='None', last_last_name='None', city='None', suburb='None',
-                 street='None', no=0, phone='0', ocupation='admin', id_user=0, id_league='1'):
+                 street='None', no=0, phone='0', ocupation='admin', id_user='0', id_league='1'):
         self.id_user = id_user
         self.password = password
         self.name = name
@@ -20,8 +20,7 @@ class User():
         # manual
         self.columns = [
             'id_user', 'id_league', 'name', 'last_name', 'last_last_name',
-            'city', 'suburb', 'street', 'no', 'phone', 'email', 'password', 'job'
-        ]
+            'city', 'suburb', 'street', 'no', 'phone', 'email', 'password', 'job']
 
     def valid_user(self, sql):
         if sql.read('Usr', ['*'], "email='{}'".format(self.email)) == []:
@@ -59,8 +58,8 @@ class User():
 
     def update(self, sql):
         args = [
-            self.id_user, self.id_league, self.name, self.last_name, self.last_last_name,
-            self.city, self.suburb, self.street, self.no, self.phone, self.email, self.password, self.ocupation
+            str(self.id_user), str(self.id_league), self.name, self.last_name, self.last_last_name,
+            self.city, self.suburb, self.street, str(self.no), self.phone, self.email, self.password, self.ocupation
         ]
         sql.update('Usr', self.columns, args, "email='{}'".format(self.email))
         sql.commit()
