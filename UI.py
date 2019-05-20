@@ -1,4 +1,5 @@
 import gi
+from datetime import datetime as date
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
@@ -497,7 +498,6 @@ class WAdminManager(Gtk.Window):
         data = self.DB_connection.read("Usr",
                                        ["name", "last_name", "last_last_name", "city", "email", "password", "job"])
         fill_tree_view_list(headers, data, list_model, users)
-
         # players
         players = self.builder.get_object("treeview_player")
         headers = ["CURP", "Nombre", "Apellido paterno", "Apellido materno", "Ciudad", "Equipo"]
@@ -508,7 +508,6 @@ class WAdminManager(Gtk.Window):
         condition = "Player.id_team = Team.id_team"
         data = self.DB_connection.select_tables(tables, columns, condition)
         fill_tree_view_list(headers, data, list_model, players)
-
         # teams
         teams = self.builder.get_object("treeview_team")
         headers = ["ID", "Nombre", "Nombre corto", "Juegos de local", "DT", ""]
@@ -518,6 +517,25 @@ class WAdminManager(Gtk.Window):
         condition = "Team.id_dt = Usr.id_user"
         data = self.DB_connection.select_tables(tables, columns, condition)
         fill_tree_view_list(headers, data, list_model, teams)
+
+        # Matches
+
+        local = self.DB_connection.select_tables(["Team", "Match"], ["Team.name"], "Team.id_team=Match.id_local")
+        visit = self.DB_connection.select_tables(["Team", "Match"], ["Team.name"], "Team.id_team=Match.id_visit")
+        referee = self.DB_connection.select_tables(["Usr", "Match"], ["Usr.name", "Usr.last_name"],
+                                                   "Usr.id_user=Match.idreferee")
+        match_info = self.DB_connection.read("Match", ["place", "match_date", "hour", "goals_local", "goals_visit"])
+        data = []
+        for i in range(len(local)):
+            tmp = [local[i][0], visit[i][0], match_info[i][0],
+                   str(match_info[i][1]), match_info[i][2], match_info[i][3],
+                   match_info[i][4], referee[i][0], referee[i][1]]
+            data.append(tmp)
+        matches = self.builder.get_object("treeview_match")
+        headers = ["Equipo local", "Equipo visitante", "Lugar", "Fecha", "Hora", "Goles local", "Goles visitante",
+                   "Árbitro", ""]
+        list_model = Gtk.ListStore(str, str, str, str, str, int, int, str, str)
+        fill_tree_view_list(headers, data, list_model, matches)
 
     def on_search_changed(self, entry):
         print(entry.get_text())
@@ -1217,6 +1235,7 @@ class WAddMatch(Gtk.Window):
         # Setting parent window
         self.parent = parent
         self.DB_connection = DB_connection
+        self.matches = []
         # Putting max size to the window
         self.maximize()
         # Avoiding resize window 
@@ -1243,17 +1262,54 @@ class WAddMatch(Gtk.Window):
         self.builder.get_object("button_back").connect(
             "clicked", lambda button, parent, present:
             go_back(parent, present), self.parent, self)
-
         self.builder.get_object("button_add_match").connect("clicked", self.on_add_button_pressed)
+        self.builder.get_object("button_help").connect("clicked", lambda button: DialogOK(
+            "De click derecho sobre el botón \npara desplegar la ayuda sobre su función."))
+
+        # Calendar
+        self.builder.get_object("calendar_date").select_day(date.now().day)
+        self.builder.get_object("calendar_date").select_month(date.now().month, date.now().year)
+
+        #  combobox
+        text_team = self.DB_connection.read("Team", ["nick_name"])
+        combobox_team = self.builder.get_object("combobox_local")
+        team_list = Gtk.ListStore(str)
+        fill_combo_box(combobox_team, team_list, text_team)
+        combobox_team = self.builder.get_object("combobox_visit")
+        team_list = Gtk.ListStore(str)
+        fill_combo_box(combobox_team, team_list, text_team)
+        combobox_tournament = self.builder.get_object("combobox_tournament")
+        league = League(1)
+        text_tournament = league.get_tournaments(self.DB_connection)
+        tournament_list = Gtk.ListStore(str)
+        fill_combo_box(combobox_tournament, tournament_list, text_tournament)
+        combobox_referee = self.builder.get_object("combobox_referee")
+        data = self.DB_connection.read("Usr", ["name", "last_name"], "job='referee'")
+        referee_list = Gtk.ListStore(str, str)
+        fill_combo_box(combobox_referee, referee_list, data)
+
+        '''
+            POPOVERS
+            HELP
+        '''
         # popover de cada button
         popover = self.builder.get_object("popover_add_match")
-        # Añadir señal de evento y añadir popover
-        self.builder.get_object("button_add_match").connect("event", self.on_event, popover)
+        button = self.builder.get_object("button_add_match")
+        popover.set_relative_to(button)
+        popover.set_modal(True)
+        button.connect("event", self.on_event, popover)
 
-        # popover de cada button
         popover = self.builder.get_object("popover_finish")
-        # Añadir señal de evento y añadir popover
-        self.builder.get_object("button_finish").connect("event", self.on_event, popover)
+        button = self.builder.get_object("button_finish")
+        popover.set_relative_to(button)
+        popover.set_modal(True)
+        button.connect("event", self.on_event, popover)
+
+        popover = self.builder.get_object("popover_add_matches")
+        button = self.builder.get_object("button_add_matches")
+        popover.set_relative_to(button)
+        popover.set_modal(True)
+        button.connect("event", self.on_event, popover)
 
     def on_event(self, widget, event, popover):
         # doc(event)
@@ -1262,7 +1318,51 @@ class WAddMatch(Gtk.Window):
             popover.popup()
 
     def on_add_button_pressed(self, button):
-        print("Hola")
+        date = self.builder.get_object("calendar_date").get_date()
+        date = str(date[0]) + '/' + str(date[1]) + '/' + str(date[2])
+        # time
+        time = self.builder.get_object("entry_time")
+        # place
+        place = self.builder.get_object("entry_place")
+        combo = self.builder.get_object("combobox_tournament")
+        i = combo.get_active_iter()
+        tournament = combo.get_model()[i][0]
+        combo = self.builder.get_object("combobox_local")
+        i = combo.get_active_iter()
+        local = combo.get_model()[i][0]
+        combo = self.builder.get_object("combobox_visit")
+        i = combo.get_active_iter()
+        visit = combo.get_model()[i][0]
+        combo = self.builder.get_object("combobox_referee")
+        i = combo.get_active_iter()
+        referee = [combo.get_model()[i][0], combo.get_model()[i][1]]
+
+        if check_void([time, place]):
+            DialogOK("Todos los campos son requeridos.")
+            return
+
+        if local == visit:
+            DialogOK("Debe elegir diferentes equipos.")
+            return
+
+        # id_tournament
+        tournament = self.DB_connection.read("Tournament", ["id_tournament"], "name='{}'".format(tournament))[0]
+        # id_local
+        local = self.DB_connection.read("Team", ["id_team"], "nick_name='{}'".format(local))[0]
+        # id_visit
+        visit = self.DB_connection.read("Team", ["id_team"], "nick_name='{}'".format(visit))[0]
+        # id_referee
+        referee = self.DB_connection.read("Usr", ["id_user"],
+                                          "job='referee' and name='{}' and last_name='{}'".format(referee[0],
+                                                                                                  referee[1]))[0]
+        match = Match(place=place, match_date=date, hour=time, id_local=local, id_visit=visit, id_day=tournament,
+                      id_referee=referee)
+        dialog = DialogConfirm(self, "¿Agregar partido?", "¿Está seguro de agregar el partido?")
+        response = dialog.run()
+        dialog.destroy()
+        if response == Gtk.ResponseType.OK:
+            self.matches.append(match)
+            DialogOK("Se ha añadido el encuentro.")
 
     def onDestroy(self, *args):
         go_back(self.parent, self)

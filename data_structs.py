@@ -1,4 +1,4 @@
-class User():
+class User:
     """docstring for User"""
 
     def __init__(self, email='None', password='None', name='None',
@@ -80,7 +80,7 @@ class User():
         self.ocupation = data[12]
 
 
-class Player():
+class Player:
     """docstring for Player"""
 
     def __init__(self, id_player='', name='', last_name='',
@@ -143,7 +143,7 @@ class Player():
         sql.commit()
 
 
-class League():
+class League:
     """docstring for League"""
 
     def __init__(self, id_league='', name=''):
@@ -180,7 +180,7 @@ class League():
         sql.commit()
 
 
-class Tournament():
+class Tournament:
     """docstring for Tournament"""
 
     def __init__(self, name='', season='', id_tournament='', id_league=''):
@@ -209,7 +209,7 @@ class Tournament():
         sql.commit()
 
 
-class Team():
+class Team:
     """docstring for Team"""
 
     def __init__(self, name='', short_name='',
@@ -256,7 +256,7 @@ class Team():
         sql.update('Team', self.columns, self.args, 'id_team={}'.format(self.id_team))
         sql.commit()
 
-    class DetailTournament():
+    class DetailTournament:
         """docstring for DetailTournament"""
 
         def __init__(self, id_detail=0, id_tournament=0, id_team=0):
@@ -281,3 +281,118 @@ class Team():
             args = [self.id_detail, self.id_tournament, self.id_team]
             sql.update('DetailTournament', self.columns, args, 'id_detail={}'.format(self.id_detail))
             sql.commit()
+
+
+class Match:
+    """docstring for Match"""
+
+    def __init__(self, id_match='', place='',
+                 match_date='', hour='', id_local='', id_visit='', id_day='', id_referee='', g_local='NULL',
+                 g_visit='NULL'):
+        self.id_match = id_match
+        self.place = place
+        self.g_local = g_local
+        self.g_visit = g_visit
+        self.match_date = match_date
+        self.hour = hour
+        self.id_local = id_local
+        self.id_visit = id_visit
+        self.id_day = id_day
+        self.id_referee = id_referee
+        self.columns = [
+            'id_match', 'place', 'match_date', 'hour', 'id_local', 'id_day', 'idreferee', 'id_visit', 'goals_local',
+            'goals_visit'
+        ]
+
+    def add(self, sql):
+        # nombre de la tabla, id
+        self.id_match = sql.next_ID('Match', 'id_match') + 1
+
+        args = [
+            self.id_match, self.place, self.match_date,
+            self.hour, self.id_local, self.id_day, self.id_referee, self.id_visit, self.g_local, self.g_visit
+        ]
+
+        # create(Nombre de la tabla, ...)
+        sql.create('Match', self.columns, args)
+        sql.commit()
+
+    def delete(self, sql):
+        sql.delete('Match', 'id_match={}'.format(self.id_match))
+        sql.commit()
+
+    def update(self, sql):
+        args = [
+            self.id_match, self.place, self.match_date,
+            self.hour, self.id_local, self.id_day, self.id_referee, self.id_visit, self.g_local, self.g_visit
+        ]
+        sql.update('Match', self.columns, args, 'id_match={}'.format(self.id_match))
+        sql.commit()
+
+
+class Day:
+    """docstring for Day"""
+
+    def __init__(self, id_day='', id_tournament=''):
+        super(Day, self).__init__()
+        self.id_day = id_day
+        self.id_tournament = id_tournament
+        self.columns = [
+            'id_day', 'id_tournament'
+        ]
+
+    def add(self, sql):
+        # nombre de la tabla, id
+        self.id_day = sql.next_ID('Day', 'id_day') + 1
+
+        args = [
+            self.id_day, self.id_tournament
+        ]
+        # create(Nombre de la tabla, ...)
+        sql.create('Day', self.columns, args)
+        sql.commit()
+
+    def delete(self, sql):
+        sql.delete('Day', 'id_day={}'.format(self.id_day))
+        sql.commit()
+
+    def update(self, sql):
+        args = [
+            self.id_day, self.id_tournament
+        ]
+        sql.update('Day', self.columns, args, 'id_day={}'.format(self.id_day))
+        sql.commit()
+
+
+class DetailTournament:
+    """docstring for DetailTournament"""
+
+    def __init__(self, id_detail='', id_tournament='', id_team=''):
+        self.id_detail = id_detail
+        self.id_tournament = id_tournament
+        self.id_team = id_team
+        self.columns = [
+            'id_detail', 'id_tournament', 'id_team'
+        ]
+
+    def add(self, sql):
+        # nombre de la tabla, id
+        self.id_detail = sql.next_ID('DetailTournament', 'id_detail') + 1
+
+        args = [
+            self.id_detail, self.id_tournament, self.id_team
+        ]
+        # create(Nombre de la tabla, ...)
+        sql.create('DetailTournament', self.columns, args)
+        sql.commit()
+
+    def delete(self, sql):
+        sql.delete('DetailTournament', 'id_detail={}'.format(self.id_detail))
+        sql.commit()
+
+    def update(self, sql):
+        args = [
+            self.id_detail, self.id_tournament, self.id_team
+        ]
+        sql.update('DetailTournament', self.columns, args, 'id_detail={}'.format(self.id_detail))
+        sql.commit()
