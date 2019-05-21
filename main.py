@@ -7,19 +7,18 @@ from zeep import Client
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
-'''
 SQL_CONNECTION = SQL.SQLConnection(
     connection_str="Driver={ODBC Driver 17 for SQL Server};" + "Server=tcp:league-manager.database.windows.net,1433;" +
                    "Database=LeagueManager;Uid=HBaena@league-manager;" + "Pwd={Leaguemanager12345};Encrypt=yes;" +
                    "TrustServerCertificate=no;Connection Timeout=10;")
-SQL_CONNECTION.connection = SQL
+'''
 if SQL_CONNECTION.connection is None:
     del SQL_CONNECTION
-'''
 SQL_CONNECTION = SQL.SQLConnection(
     None, "localhost", "TeamManager", "sa", "<6DeDiciembre>")
+'''
 
-if SQL_CONNECTION is None:
+if SQL_CONNECTION.connection is None:
     print("Error to connect to the server.")
     exit()
 

@@ -157,5 +157,12 @@ stackswitcher button{
 
 popover
 {
+    min-width: 200px;
     padding: 10px 28px 10px 0px;
+}
+
+
+.toggle
+{
+    
 }

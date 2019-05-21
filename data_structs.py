@@ -33,7 +33,7 @@ class User:
         response = sql.read('Usr', ['*'], "email='{}' and password='{}'".format(self.email, self.password))
         print("Response:", response)
 
-        if response == []:
+        if response == [] or response is None:
             return False
         else:
             self.fill_data(response[0])

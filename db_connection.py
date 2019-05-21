@@ -70,7 +70,7 @@ class SQLConnection():
 
     def select_tables(self, tables, columns, condition=None):
         data = []
-        query = "SELECT {} FROM {}{}".format(list2columns(columns), list2columns(tables),
+        query = "SELECT DISTINCT {} FROM {}{}".format(list2columns(columns), list2columns(tables),
                                              "\nWHERE " + condition + ";" if condition is not None else ";")
         print(query)
         try:

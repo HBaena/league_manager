@@ -114,6 +114,10 @@ def go_to_admin_manager(parent, sql):
     transfer(parent, WAdminManager(parent, sql))
 
 
+def go_to_referee_manager(parent, sql, referee=None):
+    transfer(parent, WRefereeManager(parent, sql, referee))
+
+
 def go_to_team_manager(parent, sql, team=None):
     transfer(parent, WTeamManager(parent, sql, team))
 
@@ -256,7 +260,7 @@ class WMain(Gtk.Window):
         if user.ocupation == 'admin':
             go_to_admin_manager(self, self.DB_connection)
         elif user.ocupation == 'referee':
-            pass
+            go_to_referee_manager(self, self.DB_connection, user)
         elif user.ocupation == 'manager':
             condition = "SELECT id_user FROM Usr WHERE email='{}'".format(user.email)
             data = self.DB_connection.read("Team", ["*"], "id_dt=({})".format(condition))[0]
@@ -528,7 +532,7 @@ class WAdminManager(Gtk.Window):
         data = []
         for i in range(len(local)):
             tmp = [local[i][0], visit[i][0], match_info[i][0],
-                   str(match_info[i][1]), match_info[i][2], match_info[i][3],
+                   str(match_info[i][1]), str(match_info[i][2]), match_info[i][3],
                    match_info[i][4], referee[i][0], referee[i][1]]
             data.append(tmp)
         matches = self.builder.get_object("treeview_match")
@@ -1222,6 +1226,216 @@ class WAddTournament(Gtk.Window):
 
     def on_modify_button_pressed(self, button):
         print("Hola")
+
+    def onDestroy(self, *args):
+        go_back(self.parent, self)
+
+
+class WRefereeManager(Gtk.Window):
+    """docstring for WindowAdminManager"""
+
+    def __init__(self, parent=None, DB_connection=None, referee=None):
+        Gtk.Window.__init__(self)
+        # Setting parent window
+        self.parent = parent
+        self.DB_connection = DB_connection
+        self.referee = referee
+        # Putting max size to the window
+        self.maximize()
+        # Avoiding resize window
+        self.set_resizable(False)
+        # self.fullscreen()
+        self.set_title("MAIN")
+        # Adding elements to the window
+        self.init()
+        # Connecting destroy action
+        self.connect("destroy", self.onDestroy)
+
+        self.set_focus(self.builder.get_object("button_back"))
+
+    def init(self):
+        # Reading builder
+        self.builder = Gtk.Builder()
+        self.builder.add_from_file("referee_manager.glade")
+
+        # LAYOUT
+        self.layout_main = self.builder.get_object("layout_main")
+        self.add(self.layout_main)
+
+        # BUTTON
+        self.builder.get_object("button_back").connect(
+            "clicked", lambda button, parent, present:
+            go_back(parent, present), self.parent, self)
+
+        self.builder.get_object("button_add_result").connect("clicked", self.on_add_button_pressed)
+        self.referee.id_user = self.DB_connection.read("Usr", ["id_user"], "email='{}'".format(self.referee.email))[0][
+            0]
+        # TREEVIEW
+        local = self.DB_connection.select_tables(["Team", "Match", "Usr"], ["Team.name", "Team.id_team", "id_match"],
+                                                 "Team.id_team=Match.id_local and Match.idreferee='{}'".format(
+                                                     self.referee.id_user))
+        visit = self.DB_connection.select_tables(["Team", "Match", "Usr"], ["Team.name", "Team.id_team", "id_match"],
+                                                 "Team.id_team=Match.id_visit and Match.idreferee='{}'".format(
+                                                     self.referee.id_user))
+        match_info = self.DB_connection.select_tables(["Match", "Usr"],
+                                                      ["Match.place", "Match.match_date", "Match.hour",
+                                                       "Match.id_match"],
+                                                      "Match.idreferee='{}'".format(self.referee.id_user))
+        data = []
+        teams = []
+        self.teams = {}
+
+        if local is None:
+            return
+        for i in range(len(local)):
+            tmp = [local[i][0], visit[i][0], match_info[i][0],
+                   str(match_info[i][1]), str(match_info[i][2]), match_info[i][3]]
+            data.append(tmp)
+            teams.append(local[i][1])
+            teams.append(visit[i][1])
+            self.teams[local[i][0]] = local[i][1]
+            self.teams[visit[i][0]] = visit[i][1]
+        matches = self.builder.get_object("treeview_match")
+        headers = ["Equipo local", "Equipo visitante", "Lugar", "Fecha", "Hora", "ID"]
+        list_model = Gtk.ListStore(str, str, str, str, str, int)
+        fill_tree_view_list(headers, data, list_model, matches)
+        self.builder.get_object("selection_match").connect("changed", self.on_row_changed)
+        teams = list(set(teams))
+        self.players = {}
+        for team in teams:
+            self.players[team] = self.DB_connection.read("Player", ["name", "last_name", "last_last_name"],
+                                                         "id_team='{}'".format(team))
+
+        treeview_local = self.builder.get_object("treeview_local")
+        local_model = Gtk.ListStore(str, str, str, bool, int, bool, bool)
+        treeview_local.set_model(local_model)
+        treeview_visit = self.builder.get_object("treeview_visit")
+        visit_model = Gtk.ListStore(str, str, str, bool, int, bool, bool)
+        treeview_visit.set_model(visit_model)
+        # Adding name columns to local
+        renderer_text = Gtk.CellRendererText()
+        column_text = Gtk.TreeViewColumn("Nombre", renderer_text, text=0)
+        treeview_local.append_column(column_text)
+
+        renderer_text = Gtk.CellRendererText()
+        column_text = Gtk.TreeViewColumn("Apellido paterno", renderer_text, text=1)
+        treeview_local.append_column(column_text)
+
+        renderer_text = Gtk.CellRendererText()
+        column_text = Gtk.TreeViewColumn("Apellido materno", renderer_text, text=2)
+        treeview_local.append_column(column_text)
+        # Adding name columns to local
+        renderer_text = Gtk.CellRendererText()
+        column_text = Gtk.TreeViewColumn("Nombre", renderer_text, text=0)
+        treeview_visit.append_column(column_text)
+
+        renderer_text = Gtk.CellRendererText()
+        column_text = Gtk.TreeViewColumn("Apellido paterno", renderer_text, text=1)
+        treeview_visit.append_column(column_text)
+
+        renderer_text = Gtk.CellRendererText()
+        column_text = Gtk.TreeViewColumn("Apellido materno", renderer_text, text=2)
+        treeview_visit.append_column(column_text)
+
+        # Adding toggle columns to local
+        renderer_toggle = Gtk.CellRendererToggle()
+        renderer_toggle.connect("toggled", self.on_toggled_button, local_model, 3)
+        column_toggle = Gtk.TreeViewColumn("¿Jugó?", renderer_toggle, active=3)
+        treeview_local.append_column(column_toggle)
+
+        renderer_text = Gtk.CellRendererText(editable=True)
+        renderer_text.connect("edited", self.on_text_edited, local_model)
+        column_text = Gtk.TreeViewColumn("Anotaciones", renderer_text, text=4)
+        treeview_local.append_column(column_text)
+
+        renderer_toggle = Gtk.CellRendererToggle()
+        renderer_toggle.connect("toggled", self.on_toggled_button, local_model, 5)
+        column_toggle = Gtk.TreeViewColumn("Amonestación", renderer_toggle, active=5)
+        treeview_local.append_column(column_toggle)
+
+        renderer_toggle = Gtk.CellRendererToggle()
+        renderer_toggle.connect("toggled", self.on_toggled_button, local_model, 6)
+        column_toggle = Gtk.TreeViewColumn("Expulsión", renderer_toggle, active=6)
+        treeview_local.append_column(column_toggle)
+        # Adding toggle columns to visit
+        renderer_toggle = Gtk.CellRendererToggle()
+        renderer_toggle.connect("toggled", self.on_toggled_button, visit_model, 3)
+        column_toggle = Gtk.TreeViewColumn("¿Jugó?", renderer_toggle, active=3)
+        treeview_visit.append_column(column_toggle)
+
+        renderer_text = Gtk.CellRendererText(editable=True)
+        renderer_text.connect("edited", self.on_text_edited, visit_model)
+        column_text = Gtk.TreeViewColumn("Anotaciones", renderer_text, text=4)
+        treeview_visit.append_column(column_text)
+
+        renderer_toggle = Gtk.CellRendererToggle()
+        renderer_toggle.connect("toggled", self.on_toggled_button, visit_model, 5)
+        column_toggle = Gtk.TreeViewColumn("Amonestación", renderer_toggle, active=5)
+        treeview_visit.append_column(column_toggle)
+
+        renderer_toggle = Gtk.CellRendererToggle()
+        renderer_toggle.connect("toggled", self.on_toggled_button, visit_model, 6)
+        column_toggle = Gtk.TreeViewColumn("Expulsión", renderer_toggle, active=6)
+        treeview_visit.append_column(column_toggle)
+
+    @staticmethod
+    def on_text_edited(self, path, text, model):
+        try:
+            model[path][4] = int(text)
+        except:
+            DialogOK("Sólo números enteros.")
+
+    @staticmethod
+    def on_toggled_button(self, path, model, pos):
+        if model[path][pos] is True:
+            model[path][pos] = False
+        else:
+            model[path][pos] = True
+
+    def on_row_changed(self, row):
+        model, selection = row.get_selected()
+        local = self.teams[model[selection][0]]
+        visit = self.teams[model[selection][1]]
+        print(local, visit)
+        treeview_local = self.builder.get_object("treeview_local")
+        treeview_visit = self.builder.get_object("treeview_visit")
+
+        treeview_local.get_model().clear()
+        treeview_visit.get_model().clear()
+        for player in self.players[local]:
+            tmp = []
+            # name
+            tmp.append(player[0])
+            # last name
+            tmp.append(player[1])
+            # last last name
+            tmp.append(player[2])
+            tmp.append(False)
+            tmp.append(0)
+            tmp.append(False)
+            tmp.append(False)
+            treeview_local.get_model().append(tmp)
+
+        for player in self.players[visit]:
+            tmp = []
+            print(player)
+            # name
+            tmp.append(player[0])
+            # last name
+            tmp.append(player[1])
+            # last last name
+            tmp.append(player[2])
+            tmp.append(False)
+            tmp.append(0)
+            tmp.append(False)
+            tmp.append(False)
+            treeview_visit.get_model().append(tmp)
+
+            treeview_local.show_all()
+            treeview_visit.show_all()
+
+    def on_add_button_pressed(self, button):
+        self.builder.get_object()
 
     def onDestroy(self, *args):
         go_back(self.parent, self)
