@@ -1531,7 +1531,9 @@ class WRefereeManager(Gtk.Window):
 
         DialogOK("Los cambios han sido guardados.")
 
-        self.DB_connection.query("UPDATE Match SET checked=1 WHERE id_match={}".format(model[selection][5]))
+        self.DB_connection.query(
+            "UPDATE Match SET checked=1, " +
+            "goals_local={}, goals_visit={} WHERE id_match={}".format(local_goals, visit_goals, model[selection][5]))
 
         model.remove(selection)
         self.builder.get_object("treeview_local").get_model().clear()
@@ -1712,8 +1714,6 @@ class WAddMatches(Gtk.Window):
         self.layout_main = self.builder.get_object("layout_main")
         self.add(self.layout_main)
 
-
-
         # BUTTON
         self.builder.get_object("button_back").connect(
             "clicked", lambda button, parent, present:
@@ -1721,6 +1721,7 @@ class WAddMatches(Gtk.Window):
 
     def on_file_choose(self, widget, path):
         print(path)
+
     def onDestroy(self, *args):
         go_back(self.parent, self)
 
