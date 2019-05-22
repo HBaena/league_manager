@@ -308,8 +308,8 @@ class Match:
     """docstring for Match"""
 
     def __init__(self, id_match='', place='',
-                 match_date='', hour='', id_local='', id_visit='', id_day='', id_referee='', g_local='NULL',
-                 g_visit='NULL'):
+                 match_date='', hour='', id_local='', id_visit='', id_day='', id_referee='', g_local='0',
+                 g_visit='0'):
         self.id_match = id_match
         self.place = place
         self.g_local = g_local

@@ -94,6 +94,21 @@ class SQLConnection():
             data.append(row)
         return data
 
+    def select_tables_no_distinct(self, tables, columns, condition=None):
+        data = []
+        query = "SELECT {} FROM {}{}".format(list2columns(columns), list2columns(tables),
+                                                      "\nWHERE " + condition + ";" if condition is not None else ";")
+        # print(query)
+        try:
+            self.cursor.execute(query)
+        except Exception as e:
+            print("Error ---->", e)
+            return None
+        for row in self.cursor:
+            print('row{}'.format(row))
+            data.append(row)
+        return data
+
     def read(self, table, columns, condition=None):
         print("Read")
         data = []

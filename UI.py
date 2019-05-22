@@ -529,9 +529,9 @@ class WAdminManager(Gtk.Window):
 
         # Matches
 
-        local = self.DB_connection.select_tables(["Team", "Match"], ["Team.name"], "Team.id_team=Match.id_local")
-        visit = self.DB_connection.select_tables(["Team", "Match"], ["Team.name"], "Team.id_team=Match.id_visit")
-        referee = self.DB_connection.select_tables(["Usr", "Match"], ["Usr.name", "Usr.last_name"],
+        local = self.DB_connection.select_tables_no_distinct(["Team", "Match"], ["Team.name"], "Team.id_team=Match.id_local")
+        visit = self.DB_connection.select_tables_no_distinct(["Team", "Match"], ["Team.name"], "Team.id_team=Match.id_visit")
+        referee = self.DB_connection.select_tables_no_distinct(["Usr", "Match"], ["Usr.name", "Usr.last_name"],
                                                    "Usr.id_user=Match.idreferee")
         match_info = self.DB_connection.read("Match", ["place", "match_date", "hour", "goals_local", "goals_visit"])
         data = []
@@ -1700,6 +1700,7 @@ class WAddMatches(Gtk.Window):
         # Setting parent window
         self.parent = parent
         self.DB_connection = DB_connection
+        self.matches = []
         # Putting max size to the window
         self.maximize()
         # Avoiding resize window
@@ -1733,12 +1734,37 @@ class WAddMatches(Gtk.Window):
             "clicked", lambda button, parent, present:
             go_back(parent, present), self.parent, self)
         self.builder.get_object("filebutton_matches").connect("file-set", self.on_file_choose)
+        self.builder.get_object("button_add").connect("clicked", self.on_button_add_pressed)
+        self.builder.get_object("button_help").connect("clicked", self.on_help_button_pressed)
+
+    def on_help_button_pressed(self, button):
+        dialog = self.builder.get_object("dialog_help")
+        button = self.builder.get_object("button_ok")
+        button.connect("clicked", lambda button, parent: parent.close(), dialog)
+        dialog.add_button("OK", 10)
+        dialog.run()
+        dialog.destroy()
+
+    def on_button_add_pressed(self, button):
+        if self.matches == []:
+            DialogOK("No se han agregado encuentro aún.")
+            return
+        try:
+            for match in self.matches:
+                match.add(self.DB_connection)
+        except Exception as e:
+            print(e)
+            DialogOK("Ha ocurrido un problema.")
+            return
+        DialogOK("Se han a;adido con éxito")
+        self.onDestroy()
 
     def on_file_choose(self, widget):
         d = []
+        self.matches = []
         try:
             data = pandas.read_excel(widget.get_filename())
-            matches = []
+            self.matches = []
             for i in data.index:
                 place = (str(data["LUGAR"][i]))
                 date = (str(data["DIA"][i].date()))
@@ -1748,9 +1774,8 @@ class WAddMatches(Gtk.Window):
                 id_referee = (int(data["ID ARBITRO"][i]))
                 match = Match(place=place, match_date=date, hour=hour, id_local=id_local, id_visit=id_visit,
                               id_referee=id_referee)
-                matches.append(match)
+                self.matches.append(match)
                 d.append([place, date, hour, id_local, id_visit, id_referee])
-            print(matches)
         except Exception as e:
             print(e)
             DialogOK("Parece ser que el archivo no cumple con\n las características para el programa.")

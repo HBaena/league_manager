@@ -8,7 +8,7 @@
 }
 #label_header{
     font-family: Roboto, 'Open Sans Condensed', sans-serif;
-    color: #158A8A;
+    color: #207BC7;
     font-size: 25px;
     font-weight: bold;
     margin-left: 30px;
@@ -16,7 +16,7 @@
 }
 #label_header2{
     font-family: Roboto, 'Open Sans Condensed', sans-serif;
-    color: #158A8A;
+    color: #207BC7;
     font-size: 18px;
     font-weight: bold;
     margin-left: 30px;
@@ -63,9 +63,10 @@ entry{
 /*BUTTOM*/
 button
 {
+    color: white;
     min-width: 150px;
     box-shadow: inset 0px 1px 0px 0px #45D6D6;
-    background-color: #45D6D6;
+    background-color: #3298EE;
     border: 1px solid #27A0A0;    
     border: none;
     padding: 8px 10px 8px 10px;
@@ -78,7 +79,8 @@ combobox{
     min-width: 200px;
 }
 combobox button.combo{
-    background-color: #45D6D6;    
+    background-color: #65ABE5;    
+
 }
 combobox box arrow{
     background-color: transparent;    
@@ -95,7 +97,7 @@ treeview.view{
     font-size: 17px;
 }    
 treeview.view button{
-    color: gray;
+    color: white;
     font-family: 'Open Sans Condensed', sans-serif;
     font-size: 18px;
     border-radius: 0px;
@@ -105,10 +107,10 @@ treeview.view button{
 /*MENUBAR*/
 
 menubar{
-    background-color: #158A8A;
+    background-color: #207BC7;
 }
 menuitem{
-    background-color: #158A8A;
+    background-color: #207BC7;
 }
 menuitem label{
     color: white;   
@@ -125,6 +127,7 @@ menuitem label{
 #dialog
 {
     margin: 15px;
+    padding: 15px;
 }
 
 
@@ -134,11 +137,15 @@ stack{
 stackswitcher{
     background-color: transparent;
 }
+stackswitcher button label{
+    color: white;
+}
 
 stackswitcher button{
 
     min-width: 150px;
-    background-color: #A4E9E9;
+    background-color: #65ABE5;
+    color: black;
     border: 1px solid #27A0A0;
     border: none; 
     padding: 8px 10px 8px 10px;
