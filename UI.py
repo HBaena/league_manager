@@ -1,4 +1,5 @@
 import gi
+import csv
 from datetime import datetime as date
 
 gi.require_version('Gtk', '3.0')
@@ -108,6 +109,10 @@ def transfer(parent, present):
 
 def go_to_contact(parent, sql=None):
     transfer(parent, WContact(parent, sql))
+
+
+def go_to_add_matches(parent, sql=None):
+    transfer(parent, WAddMatches(parent, sql))
 
 
 def go_to_admin_manager(parent, sql):
@@ -1270,7 +1275,7 @@ class WRefereeManager(Gtk.Window):
         self.referee.id_user = self.DB_connection.read("Usr", ["id_user"], "email='{}'".format(self.referee.email))[0][
             0]
         # TREEVIEW
-        today =  date.now()
+        today = date.now()
 
         print(str(today), str(today.strftime("%X")))
         local = self.DB_connection.select_tables(["Team", "Match", "Usr"], ["Team.name", "Team.id_team", "id_match"],
@@ -1673,6 +1678,49 @@ class WAddMatch(Gtk.Window):
             self.matches.append(match)
             DialogOK("Se ha añadido el encuentro.")
 
+    def onDestroy(self, *args):
+        go_back(self.parent, self)
+
+
+class WAddMatches(Gtk.Window):
+    """docstring for WindowMain"""
+
+    def __init__(self, parent=None, DB_connection=None):
+        Gtk.Window.__init__(self)
+        # Setting parent window
+        self.parent = parent
+        self.DB_connection = DB_connection
+        # Putting max size to the window
+        self.maximize()
+        # Avoiding resize window
+        self.set_resizable(False)
+        # self.fullscreen()
+        self.set_title("MAIN")
+        # Adding elements to the window
+        self.init()
+        # Connecting destroy action
+        self.connect("destroy", self.onDestroy)
+
+        self.set_focus(self.builder.get_object("button_login"))
+
+    def init(self):
+        # Reading builder
+        self.builder = Gtk.Builder()
+        self.builder.add_from_file("UI/add_matches.glade")
+
+        # LAYOUT
+        self.layout_main = self.builder.get_object("layout_main")
+        self.add(self.layout_main)
+
+
+
+        # BUTTON
+        self.builder.get_object("button_back").connect(
+            "clicked", lambda button, parent, present:
+            go_back(parent, present), self.parent, self)
+
+    def on_file_choose(self, widget, path):
+        print(path)
     def onDestroy(self, *args):
         go_back(self.parent, self)
 

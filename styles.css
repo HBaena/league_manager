@@ -166,3 +166,9 @@ popover
 {
     
 }
+.filechooser button
+{
+    background: lightgray;
+    min-width: 20px;
+    color: black;
+}
