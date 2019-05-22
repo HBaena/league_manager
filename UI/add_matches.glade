@@ -4,7 +4,7 @@
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkFileFilter" id="filtro_csv">
     <patterns>
-      <pattern>*.csv</pattern>
+      <pattern>*.xls</pattern>
     </patterns>
   </object>
   <object class="GtkScrolledWindow" id="layout_main">
@@ -48,20 +48,6 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">1</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkFileChooserButton" id="filebutton_matches">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="valign">center</property>
-                <property name="filter">filtro_csv</property>
-                <property name="title" translatable="yes">Archivo de jornada</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
                 <property name="width">2</property>
               </packing>
             </child>
@@ -133,6 +119,20 @@
               <packing>
                 <property name="left_attach">3</property>
                 <property name="top_attach">4</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkFileChooserButton" id="filebutton_matches">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="valign">center</property>
+                <property name="filter">filtro_csv</property>
+                <property name="title" translatable="yes">Archivo de jornada</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
                 <property name="width">2</property>
               </packing>
             </child>

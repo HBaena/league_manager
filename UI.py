@@ -1,5 +1,5 @@
 import gi
-import csv
+import pandas
 from datetime import datetime as date
 
 gi.require_version('Gtk', '3.0')
@@ -614,10 +614,14 @@ class WAdminManager(Gtk.Window):
             go_to_add_team(self, self.DB_connection, team, dt)
             return
         elif active == "Match":
-            go_to_add_match(self, self.DB_connection)
+            DialogOK("Por cuestiones de seguridad los partidos una vez\n añadidos no se pueden eliminar ni modificar.")
 
     def on_delete_button_pressed(self, button):
+
         active = self.builder.get_object("stack").get_visible_child().get_name()
+        if active == "Match":
+            DialogOK("Por cuestiones de seguridad los partidos una vez\n añadidos no se pueden eliminar ni modificar.")
+            return
         dialog = DialogConfirm(self, "Delete " + active + "?", "¿Está seguro de eliminar?")
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
@@ -1581,6 +1585,10 @@ class WAddMatch(Gtk.Window):
         self.builder.get_object("button_add_match").connect("clicked", self.on_add_button_pressed)
         self.builder.get_object("button_help").connect("clicked", lambda button: DialogOK(
             "De click derecho sobre el botón \npara desplegar la ayuda sobre su función."))
+        self.builder.get_object("button_add_matches").connect("clicked",
+                                                              lambda widget, parent, sql: go_to_add_matches(parent,
+                                                                                                            sql), self,
+                                                              self.DB_connection)
 
         # Calendar
         self.builder.get_object("calendar_date").select_day(date.now().day)
@@ -1713,14 +1721,45 @@ class WAddMatches(Gtk.Window):
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
         self.add(self.layout_main)
+        # treeviewlist
+        tree = self.builder.get_object("treeview_matches")
+        headers = ["LUGAR", "DIA", "HORA", "ID LOCAL", "ID VISITANTE", "ID ARBITRO"]
+        model = Gtk.ListStore(str, str, str, int, int, int)
+        data = []
+        fill_tree_view_list(headers, data, model, tree)
 
         # BUTTON
         self.builder.get_object("button_back").connect(
             "clicked", lambda button, parent, present:
             go_back(parent, present), self.parent, self)
+        self.builder.get_object("filebutton_matches").connect("file-set", self.on_file_choose)
 
-    def on_file_choose(self, widget, path):
-        print(path)
+    def on_file_choose(self, widget):
+        d = []
+        try:
+            data = pandas.read_excel(widget.get_filename())
+            matches = []
+            for i in data.index:
+                place = (str(data["LUGAR"][i]))
+                date = (str(data["DIA"][i].date()))
+                hour = (str(data["HORA"][i]))
+                id_local = (int(data["ID LOCAL"][i]))
+                id_visit = (int(data["ID VISITANTE"][i]))
+                id_referee = (int(data["ID ARBITRO"][i]))
+                match = Match(place=place, match_date=date, hour=hour, id_local=id_local, id_visit=id_visit,
+                              id_referee=id_referee)
+                matches.append(match)
+                d.append([place, date, hour, id_local, id_visit, id_referee])
+            print(matches)
+        except Exception as e:
+            print(e)
+            DialogOK("Parece ser que el archivo no cumple con\n las características para el programa.")
+            return
+        model = self.builder.get_object("treeview_matches").get_model()
+        model.clear()
+        for row in d:
+            model.append(row)
+        DialogOK("Se ha podido leer correctamente el documento")
 
     def onDestroy(self, *args):
         go_back(self.parent, self)
