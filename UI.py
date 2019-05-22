@@ -2,7 +2,7 @@ import gi
 from datetime import datetime as date
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
+from gi.repository import Gtk, Gdk, Pango
 from data_structs import *
 
 
