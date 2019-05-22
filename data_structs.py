@@ -133,6 +133,16 @@ class Player:
         sql.delete('Player', 'id_player={}'.format(self.id_player))
         sql.commit()
 
+    def update_statistics(self, sql, appearence, goals, reprimand, expulsion):
+        query = "UPDATE Player \nSET "
+        query += "expulsions += expulsions + {}, ".format(expulsion)
+        query += "reprimands += reprimands + {}, ".format(reprimand)
+        query += "appearances += appearances + {}, ".format(appearence)
+        query += "goals += goals + {}\n".format(goals)
+        query += "WHERE name='{}' AND last_name='{}' AND last_last_name='{}'".format(self.name, self.last_name,
+                                                                                    self.last_last_name)
+        sql.query(query)
+
     def update(self, sql):
         args = [
             self.id_player, self.name, self.last_name, self.last_last_name,
@@ -250,6 +260,17 @@ class Team:
     def delete(self, sql):
         sql.delete('Team', "id_team={} or name='{}'".format(self.id_team, self.name))
         sql.commit()
+
+    def update_statistics(self, sql, goals, goals_conceded, win, lost, draw):
+        query = "UPDATE Team\n"
+        query += "SET "
+        query += "win += win + {}, ".format(win)
+        query += "lost += lost + {}, ".format(lost)
+        query += "draw += draw + {}, ".format(draw)
+        query += "goals += goals + {}, ".format(goals)
+        query += "goals_conceded += goals_conceded + {}\n".format(goals_conceded)
+        query += "WHERE id_team='{}'".format(self.id_team)
+        sql.query(query)
 
     def update(self, sql):
         self.__refresh_args()

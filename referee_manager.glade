@@ -98,7 +98,7 @@
                     <property name="can_focus">True</property>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection" id="selection_local">
-                        <property name="mode">multiple</property>
+                        <property name="mode">browse</property>
                       </object>
                     </child>
                   </object>
@@ -166,7 +166,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <child internal-child="selection">
-                      <object class="GtkTreeSelection"/>
+                      <object class="GtkTreeSelection" id="selection_visit"/>
                     </child>
                   </object>
                 </child>
@@ -227,5 +227,4 @@
       </object>
     </child>
   </object>
-  <object class="GtkListStore" id="liststore_local"/>
 </interface>

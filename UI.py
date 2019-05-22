@@ -1267,20 +1267,23 @@ class WRefereeManager(Gtk.Window):
             "clicked", lambda button, parent, present:
             go_back(parent, present), self.parent, self)
 
-        self.builder.get_object("button_add_result").connect("clicked", self.on_add_button_pressed)
         self.referee.id_user = self.DB_connection.read("Usr", ["id_user"], "email='{}'".format(self.referee.email))[0][
             0]
         # TREEVIEW
+        today =  date.now()
+
+        print(str(today), str(today.strftime("%X")))
         local = self.DB_connection.select_tables(["Team", "Match", "Usr"], ["Team.name", "Team.id_team", "id_match"],
-                                                 "Team.id_team=Match.id_local and Match.idreferee='{}'".format(
+                                                 "Team.id_team=Match.id_local and Match.idreferee='{}' and Match.checked=0".format(
                                                      self.referee.id_user))
         visit = self.DB_connection.select_tables(["Team", "Match", "Usr"], ["Team.name", "Team.id_team", "id_match"],
-                                                 "Team.id_team=Match.id_visit and Match.idreferee='{}'".format(
+                                                 "Team.id_team=Match.id_visit and Match.idreferee='{}' and Match.checked=0".format(
                                                      self.referee.id_user))
         match_info = self.DB_connection.select_tables(["Match", "Usr"],
                                                       ["Match.place", "Match.match_date", "Match.hour",
                                                        "Match.id_match"],
-                                                      "Match.idreferee='{}'".format(self.referee.id_user))
+                                                      "Match.idreferee='{}' and Match.checked=0".format(
+                                                          self.referee.id_user))
         data = []
         teams = []
         self.teams = {}
@@ -1378,6 +1381,9 @@ class WRefereeManager(Gtk.Window):
         column_toggle = Gtk.TreeViewColumn("Expulsión", renderer_toggle, active=6)
         treeview_visit.append_column(column_toggle)
 
+        self.builder.get_object("button_add_result").connect("clicked", self.on_add_button_pressed, local_model,
+                                                             visit_model)
+
     @staticmethod
     def on_text_edited(self, path, text, model):
         try:
@@ -1434,8 +1440,97 @@ class WRefereeManager(Gtk.Window):
             treeview_local.show_all()
             treeview_visit.show_all()
 
-    def on_add_button_pressed(self, button):
-        self.builder.get_object()
+    def on_add_button_pressed(self, button, model_local, model_visit):
+
+        local_appearences = 0
+        local_goals = 0
+        for row in model_local:
+            if row[3]:
+                local_appearences += 1
+            local_goals += row[4]
+
+        visit_appearences = 0
+        visit_goals = 0
+        for row in model_visit:
+            if row[3]:
+                visit_appearences += 1
+            visit_goals += row[4]
+
+        dialog = None
+        tmp = 0
+        if local_appearences < 7 and visit_appearences < 7:
+            dialog = DialogConfirm(self, title="¿Desea agregar el resultado?",
+                                   text_content="Una vez agregado el resultado, la información no podrá ser modificada.\n" +
+                                                "Los equipos tienen menos de 7 jugadores seleccionados,\n" +
+                                                "ningún equipo sumaría puntos.")
+            tmp = 1
+        elif local_appearences < 7:
+            dialog = DialogConfirm(self, title="¿Desea agregar el resultado?",
+                                   text_content="Una vez agregado el resultado, la información no podrá ser modificada.\n" +
+                                                "El equipo local tiene menos de 7 jugadores seleccionados,\n" +
+                                                "el equipo pierde 0 - 3 por default.")
+            tmp = 2
+        elif visit_appearences < 7:
+            dialog = DialogConfirm(self, title="¿Desea agregar el resultado?",
+                                   text_content="Una vez agregado el resultado, la información no podrá ser modificada.\n" +
+                                                "El equipo visitante tiene menos de 7 jugadores seleccionados,\n" +
+                                                "el equipo pierde 3 - 0 por default.")
+            tmp = 3
+        else:
+            dialog = DialogConfirm(self, title="¿Desea agregar el resultado?",
+                                   text_content="Una vez agregado el resultado, la información no podrá ser modificada.\n" +
+                                                "El marcador es: " + str(local_goals) + " - " + str(visit_goals))
+
+        response = dialog.run()
+        dialog.destroy()
+
+        if response != Gtk.ResponseType.OK:
+            return
+
+        model, selection = self.builder.get_object("selection_match").get_selected()
+        id_local = self.teams[model[selection][0]]
+        id_visit = self.teams[model[selection][1]]
+        print("Id_local", id_local)
+        print("id_visit", id_visit)
+        if tmp == 0:
+            # local players
+            for row in model_local:
+                if row[3]:
+                    player = Player(name=row[0], last_name=row[1], last_last_name=row[2])
+                    player.update_statistics(self.DB_connection, int(row[3]), int(row[4]), int(row[5]), int(row[6]))
+                    del player
+            # visit players
+            for row in model_local:
+                if row[3]:
+                    player = Player(name=row[0], last_name=row[1], last_last_name=row[2])
+                    player.update_statistics(self.DB_connection, int(row[3]), int(row[4]), int(row[5]), int(row[6]))
+                    del player
+            # local
+            team = Team(id_team=id_local)
+            team.update_statistics(self.DB_connection, local_goals, visit_goals, int(local_goals > visit_goals),
+                                   int(local_goals < visit_goals), int(local_goals == visit_goals))
+            # visit
+            team = Team(id_team=id_visit)
+            team.update_statistics(self.DB_connection, visit_goals, local_goals, int(visit_goals > local_goals),
+                                   int(visit_goals < local_goals), int(visit_goals == local_goals))
+
+        elif tmp == 3:
+            # local
+            team = Team(id_team=id_local)
+            team.update_statistics(self.DB_connection, 3, 0, 1, 0, 0)
+
+        elif tmp == 2:
+            # visit
+            team = Team(id_team=id_visit)
+            team.update_statistics(self.DB_connection, 3, 0, 1, 0, 0)
+
+        DialogOK("Los cambios han sido guardados.")
+
+        self.DB_connection.query("UPDATE Match SET checked=1 WHERE id_match={}".format(model[selection][5]))
+
+        model.remove(selection)
+        self.builder.get_object("treeview_local").get_model().clear()
+        self.builder.get_object("treeview_visit").get_model().clear()
 
     def onDestroy(self, *args):
         go_back(self.parent, self)

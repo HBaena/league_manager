@@ -68,11 +68,22 @@ class SQLConnection():
         except Exception as e:
             print("Error ----> ", e)
 
+    def query(self, query):
+        print(query)
+        try:
+            self.cursor.execute(query)
+            self.cursor.commit()
+            return "Success"
+        except Exception as e:
+            print("Error ---->", e)
+            return None
+
+
     def select_tables(self, tables, columns, condition=None):
         data = []
         query = "SELECT DISTINCT {} FROM {}{}".format(list2columns(columns), list2columns(tables),
-                                             "\nWHERE " + condition + ";" if condition is not None else ";")
-        print(query)
+                                                      "\nWHERE " + condition + ";" if condition is not None else ";")
+        # print(query)
         try:
             self.cursor.execute(query)
         except Exception as e:
@@ -89,7 +100,7 @@ class SQLConnection():
         # query = "SELECT " + list2columns(columns) + " FROM " + table
         query = "SELECT {} FROM {}{}".format(list2columns(
             columns), table, "\nWHERE " + condition + ";" if condition is not None else ";")
-        print(query)
+        # print(query)
 
         try:
             self.cursor.execute(query)
