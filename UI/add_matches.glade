@@ -14,9 +14,14 @@
     <property name="name">dialog</property>
     <property name="can_focus">False</property>
     <property name="type_hint">dialog</property>
+    <property name="text" translatable="yes">&lt;big&gt;ESTRUCTURA DEL ARCHIVO DE EXCEL.&lt;/big&gt;</property>
+    <property name="use_markup">True</property>
+    <property name="secondary_text" translatable="yes">Los nombres de la fila 1 deben coincidir como a los de la imagen. Los nombres en negirtas, mayúsculas y sin acentos. Cuidado de poner los datos como corresponden. 
+El archivo debe ser de extensión xls. </property>
+    <property name="secondary_use_markup">True</property>
     <child internal-child="vbox">
-      <object class="GtkBox" id="dialog">
-        <property name="name">dialog</property>
+      <object class="GtkBox">
+        <property name="name">layout_main</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
@@ -43,9 +48,6 @@
             <property name="name">label_header2</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Los nombres de la fila 1 deben coincidir como a los de la imagen.
-Los nombres en negirtas, mayúsculas y sin acentos.
-Cuidado de poner los datos como corresponden.</property>
             <property name="justify">center</property>
           </object>
           <packing>

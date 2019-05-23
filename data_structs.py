@@ -135,10 +135,10 @@ class Player:
 
     def update_statistics(self, sql, appearence, goals, reprimand, expulsion):
         query = "UPDATE Player \nSET "
-        query += "expulsions += expulsions + {}, ".format(expulsion)
-        query += "reprimands += reprimands + {}, ".format(reprimand)
-        query += "appearances += appearances + {}, ".format(appearence)
-        query += "goals += goals + {}\n".format(goals)
+        query += "expulsions = expulsions + {}, ".format(expulsion)
+        query += "reprimands = reprimands + {}, ".format(reprimand)
+        query += "appearances = appearances + {}, ".format(appearence)
+        query += "goals = goals + {}\n".format(goals)
         query += "WHERE name='{}' AND last_name='{}' AND last_last_name='{}'".format(self.name, self.last_name,
                                                                                     self.last_last_name)
         sql.query(query)
@@ -264,11 +264,11 @@ class Team:
     def update_statistics(self, sql, goals, goals_conceded, win, lost, draw):
         query = "UPDATE Team\n"
         query += "SET "
-        query += "win += win + {}, ".format(win)
-        query += "lost += lost + {}, ".format(lost)
-        query += "draw += draw + {}, ".format(draw)
-        query += "goals += goals + {}, ".format(goals)
-        query += "goals_conceded += goals_conceded + {}\n".format(goals_conceded)
+        query += "win = win + {}, ".format(win)
+        query += "lost = lost + {}, ".format(lost)
+        query += "draw = draw + {}, ".format(draw)
+        query += "goals = goals + {}, ".format(goals)
+        query += "goals_conceded = goals_conceded + {}\n".format(goals_conceded)
         query += "WHERE id_team='{}'".format(self.id_team)
         sql.query(query)
 

@@ -529,21 +529,26 @@ class WAdminManager(Gtk.Window):
 
         # Matches
 
-        local = self.DB_connection.select_tables_no_distinct(["Team", "Match"], ["Team.name"], "Team.id_team=Match.id_local")
-        visit = self.DB_connection.select_tables_no_distinct(["Team", "Match"], ["Team.name"], "Team.id_team=Match.id_visit")
+        local = self.DB_connection.select_tables_no_distinct(["Team", "Match"], ["Team.name"],
+                                                             "Team.id_team=Match.id_local")
+        visit = self.DB_connection.select_tables_no_distinct(["Team", "Match"], ["Team.name"],
+                                                             "Team.id_team=Match.id_visit")
         referee = self.DB_connection.select_tables_no_distinct(["Usr", "Match"], ["Usr.name", "Usr.last_name"],
-                                                   "Usr.id_user=Match.idreferee")
+                                                               "Usr.id_user=Match.idreferee")
         match_info = self.DB_connection.read("Match", ["place", "match_date", "hour", "goals_local", "goals_visit"])
+        tournament = self.DB_connection.select_tables_no_distinct(["Tournament", "Match"], ["Tournament.name"],
+                                                                  "Tournament.id_tournament = Match.id_day")
         data = []
         for i in range(len(local)):
+            print(referee[i][0])
             tmp = [local[i][0], visit[i][0], match_info[i][0],
                    str(match_info[i][1]), str(match_info[i][2]), match_info[i][3],
-                   match_info[i][4], referee[i][0], referee[i][1]]
+                   match_info[i][4], referee[i][0], referee[i][1], tournament[i][0]]
             data.append(tmp)
         matches = self.builder.get_object("treeview_match")
         headers = ["Equipo local", "Equipo visitante", "Lugar", "Fecha", "Hora", "Goles local", "Goles visitante",
-                   "Árbitro", ""]
-        list_model = Gtk.ListStore(str, str, str, str, str, int, int, str, str)
+                   "Árbitro", "", "Torneo"]
+        list_model = Gtk.ListStore(str, str, str, str, str, int, int, str, str, str)
         fill_tree_view_list(headers, data, list_model, matches)
 
     def on_search_changed(self, entry):
@@ -1409,6 +1414,8 @@ class WRefereeManager(Gtk.Window):
 
     def on_row_changed(self, row):
         model, selection = row.get_selected()
+        if selection is None:
+            return
         local = self.teams[model[selection][0]]
         visit = self.teams[model[selection][1]]
         print(local, visit)
@@ -1724,8 +1731,8 @@ class WAddMatches(Gtk.Window):
         self.add(self.layout_main)
         # treeviewlist
         tree = self.builder.get_object("treeview_matches")
-        headers = ["LUGAR", "DIA", "HORA", "ID LOCAL", "ID VISITANTE", "ID ARBITRO"]
-        model = Gtk.ListStore(str, str, str, int, int, int)
+        headers = ["LUGAR", "DIA", "HORA", "ID LOCAL", "ID VISITANTE", "ID ARBITRO", "ID TORNEO"]
+        model = Gtk.ListStore(str, str, str, int, int, int, int)
         data = []
         fill_tree_view_list(headers, data, model, tree)
 
@@ -1746,8 +1753,13 @@ class WAddMatches(Gtk.Window):
         dialog.destroy()
 
     def on_button_add_pressed(self, button):
+        dialog = DialogConfirm(self, "Agregar la jornada", "¿Está seguro de agregar la jornada?")
+        response = dialog.run()
+        dialog.destroy()
+        if response != Gtk.ResponseType.OK:
+            return;
         if self.matches == []:
-            DialogOK("No se han agregado encuentro aún.")
+            DialogOK("No se han agregado encuentros aún.")
             return
         try:
             for match in self.matches:
@@ -1756,7 +1768,7 @@ class WAddMatches(Gtk.Window):
             print(e)
             DialogOK("Ha ocurrido un problema.")
             return
-        DialogOK("Se han a;adido con éxito")
+        DialogOK("Se han añadido con éxito")
         self.onDestroy()
 
     def on_file_choose(self, widget):
@@ -1764,6 +1776,7 @@ class WAddMatches(Gtk.Window):
         self.matches = []
         try:
             data = pandas.read_excel(widget.get_filename())
+
             self.matches = []
             for i in data.index:
                 place = (str(data["LUGAR"][i]))
@@ -1772,10 +1785,11 @@ class WAddMatches(Gtk.Window):
                 id_local = (int(data["ID LOCAL"][i]))
                 id_visit = (int(data["ID VISITANTE"][i]))
                 id_referee = (int(data["ID ARBITRO"][i]))
+                id_tournament = (int(data["ID TORNEO"][i]))
                 match = Match(place=place, match_date=date, hour=hour, id_local=id_local, id_visit=id_visit,
-                              id_referee=id_referee)
+                              id_referee=id_referee, id_day=id_tournament)
                 self.matches.append(match)
-                d.append([place, date, hour, id_local, id_visit, id_referee])
+                d.append([place, date, hour, id_local, id_visit, id_referee, id_tournament])
         except Exception as e:
             print(e)
             DialogOK("Parece ser que el archivo no cumple con\n las características para el programa.")
