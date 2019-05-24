@@ -526,9 +526,13 @@ class WAdminManager(Gtk.Window):
         condition = "Team.id_dt = Usr.id_user"
         data = self.DB_connection.select_tables(tables, columns, condition)
         fill_tree_view_list(headers, data, list_model, teams)
-
+        # Tournaments
+        tournaments = self.builder.get_object("treeview_tournament")
+        headers = ["ID", "NOMBRE", "TEMPORADA"]
+        list_model = Gtk.ListStore(int, str, str)
+        data = self.DB_connection.read("Tournament", ["id_tournament", "name", "season"])
+        fill_tree_view_list(headers, data, list_model, tournaments)
         # Matches
-
         local = self.DB_connection.select_tables_no_distinct(["Team", "Match"], ["Team.name"],
                                                              "Team.id_team=Match.id_local")
         visit = self.DB_connection.select_tables_no_distinct(["Team", "Match"], ["Team.name"],
@@ -541,14 +545,14 @@ class WAdminManager(Gtk.Window):
         data = []
         for i in range(len(local)):
             print(referee[i][0])
-            tmp = [local[i][0], visit[i][0], match_info[i][0],
+            tmp = [tournament[i][0], local[i][0], visit[i][0], match_info[i][0],
                    str(match_info[i][1]), str(match_info[i][2]), match_info[i][3],
-                   match_info[i][4], referee[i][0], referee[i][1], tournament[i][0]]
+                   match_info[i][4], referee[i][0], referee[i][1]]
             data.append(tmp)
         matches = self.builder.get_object("treeview_match")
-        headers = ["Equipo local", "Equipo visitante", "Lugar", "Fecha", "Hora", "Goles local", "Goles visitante",
-                   "Árbitro", "", "Torneo"]
-        list_model = Gtk.ListStore(str, str, str, str, str, int, int, str, str, str)
+        headers = ["Torneo", "Equipo local", "Equipo visitante", "Lugar", "Fecha", "Hora", "Goles local",
+                   "Goles visitante", "Árbitro", ""]
+        list_model = Gtk.ListStore(str, str, str, str, str, str, int, int, str, str)
         fill_tree_view_list(headers, data, list_model, matches)
 
     def on_search_changed(self, entry):
