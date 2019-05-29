@@ -1,5 +1,5 @@
 import pyodbc
-import hashlib
+# import hashlib
 
 
 # connection = pyodbc.connect(
@@ -13,8 +13,8 @@ import hashlib
 # returns a hash sha256 from a string
 
 
-def string2hash(password):
-    return hashlib.sha1(str.encode(password)).hexdigest()
+# def string2hash(password):
+#    return hashlib.sha1(str.encode(password)).hexdigest()
 
 
 # convert a list to a string of values with format "'value1', 'values2', ..."
