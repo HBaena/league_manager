@@ -54,18 +54,6 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkComboBox">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
                   <object class="GtkEntry" id="entry_season">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -100,13 +88,13 @@
                     <property name="can_focus">True</property>
                     <property name="shadow_type">in</property>
                     <child>
-                      <object class="GtkTreeView">
+                      <object class="GtkTreeView" id="treeview_teams">
                         <property name="height_request">200</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <child internal-child="selection">
                           <object class="GtkTreeSelection" id="selection_teams">
-                            <property name="mode">multiple</property>
+                            <property name="mode">browse</property>
                           </object>
                         </child>
                       </object>
@@ -161,6 +149,9 @@
                     <property name="top_attach">4</property>
                     <property name="width">3</property>
                   </packing>
+                </child>
+                <child>
+                  <placeholder/>
                 </child>
                 <child>
                   <placeholder/>

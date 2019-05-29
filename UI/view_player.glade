@@ -34,22 +34,6 @@
               </packing>
             </child>
             <child>
-              <object class="GtkImage" id="image_playerphoto">
-                <property name="name">image_player</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="halign">end</property>
-                <property name="valign">center</property>
-                <property name="stock">gtk-missing-image</property>
-              </object>
-              <packing>
-                <property name="left_attach">3</property>
-                <property name="top_attach">0</property>
-                <property name="width">2</property>
-                <property name="height">2</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkLabel">
                 <property name="name">label_header</property>
                 <property name="visible">True</property>
@@ -222,21 +206,6 @@
                 <property name="left_attach">2</property>
                 <property name="top_attach">6</property>
               </packing>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
             </child>
             <child>
               <placeholder/>

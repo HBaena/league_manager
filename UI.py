@@ -1,10 +1,12 @@
 import gi
 import pandas
-from datetime import datetime as date
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, Pango
+from gi.repository import Gtk
+from gi.repository.Pango import Weight
+from gi.repository.Gdk import EventType
 from data_structs import *
+from datetime import datetime as date
 
 
 def doc(o):
@@ -76,7 +78,7 @@ def fill_tree_view_list(headers, data, list_model, tree):
         if i == 0:
             # Headers
             cell.props.weight_set = True
-            cell.props.weight = Pango.Weight.BOLD
+            cell.props.weight = Weight.BOLD
         # Column
         col = Gtk.TreeViewColumn(column, cell, text=i)
         # Append column
@@ -185,11 +187,16 @@ class WMain(Gtk.Window):
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
         self.add(self.layout_main)
+        # DATA
+        columns = ["Team.name", "Team.nick_name", "Team.local_place", "Usr.name", "Usr.last_name"]
+        tables = ["Team", "Usr"]
+        condition = "Team.id_dt = Usr.id_user"
+        self.teams = self.DB_connection.select_tables(tables, columns, condition)
+        self.tournaments = self.DB_connection.read("Tournament", ["id_tournament, name, season"])
 
         # COMBOBOX
         combobox_tournament = self.builder.get_object("combobox_tournament")
-        league = League(1)
-        text_tournament = league.get_tournaments(self.DB_connection)
+        text_tournament = [[tournament[1]] for tournament in self.tournaments]
         self.tournament_list = Gtk.ListStore(str)
         fill_combo_box(combobox_tournament, self.tournament_list, text_tournament)
         combobox_tournament.connect("changed", self.on_tournament_changed)
@@ -206,13 +213,110 @@ class WMain(Gtk.Window):
         # TREEVIEWLIST
         # teams
         teams = self.builder.get_object("treeview_team")
-        headers = ["Nombre", "Nombre corto", "Juegos de local", "DT", ""]
-        list_model = Gtk.ListStore(str, str, str, str, str)
-        columns = ["Team.name", "Team.nick_name", "Team.local_place", "Usr.name", "Usr.last_name"]
-        tables = ["Team", "Usr"]
-        condition = "Team.id_dt = Usr.id_user"
-        data = self.DB_connection.select_tables(tables, columns, condition)
-        fill_tree_view_list(headers, data, list_model, teams)
+        headers = ["Nombre", "Total de juegos", "Juegos ganado", "Juegos empatados", "Juegos perdidos",
+                   "Diferencia de goles", "Puntos"]
+        list_model = Gtk.ListStore(str, int, int, int, int, int, int)
+        self.set_model_to_tree(teams, list_model, headers)
+        self.fill_tree_teams(self.tournaments[0][0], list_model)
+
+        # last matches
+        matches = self.builder.get_object("treeview_lastresults")
+        headers = ["Equipo local", "Equipo visitante", "Lugar", "Fecha", "Hora", "ID"]
+        list_model = Gtk.ListStore(str, str, str, str, str, int)
+        self.set_model_to_tree(matches, list_model, headers)
+        self.fill_tree_last_matches(self.tournaments[0][0])
+
+        matches = self.builder.get_object("treeview_nextmatches")
+        headers = ["Equipo local", "Equipo visitante", "Lugar", "Fecha", "Hora", "ID"]
+        list_model = Gtk.ListStore(str, str, str, str, str, int)
+        self.set_model_to_tree(matches, list_model, headers)
+        self.fill_tree_next_matches(self.tournaments[0][0])
+
+    def fill_tree_next_matches(self, id_tournament):
+        matches = self.builder.get_object("treeview_nextmatches")
+        local = self.DB_connection.select_tables(["Team", "Match", "Usr"],
+                                                 ["TOP 20 Team.name", "Team.id_team", "id_match", "Match.match_date"],
+                                                 "Team.id_team=Match.id_local and Match.checked=0 and id_day={} ORDER BY Match.match_date DESC".format(
+                                                     id_tournament))
+        visit = self.DB_connection.select_tables(["Team", "Match", "Usr"],
+                                                 ["TOP 20 Team.name", "Team.id_team", "id_match", "Match.match_date"],
+                                                 "Team.id_team=Match.id_visit and Match.checked=0 and id_day={} ORDER BY Match.match_date DESC".format(
+                                                     id_tournament))
+
+        match_info = self.DB_connection.select_tables(["Match", "Usr"],
+                                                      ["TOP 20 Match.place", "Match.match_date", "Match.hour",
+                                                       "Match.id_match", "Match.match_date"],
+                                                      "Match.checked=0 and id_day={} ORDER BY Match.match_date DESC".format(
+                                                          id_tournament))
+        matches.get_model().clear()
+        if local is None:
+            return
+
+        for i in range(len(local)):
+            tmp = [local[i][0], visit[i][0], match_info[i][0],
+                   str(match_info[i][1]), str(match_info[i][2]), match_info[i][3]]
+            matches.get_model().append(tmp)
+
+    def fill_tree_last_matches(self, id_tournament):
+        matches = self.builder.get_object("treeview_lastresults")
+        local = self.DB_connection.select_tables(["Team", "Match", "Usr"],
+                                                 ["TOP 20 Team.name", "Team.id_team", "id_match", "Match.match_date"],
+                                                 "Team.id_team=Match.id_local and Match.checked=1 and id_day={} ORDER BY Match.match_date DESC".format(
+                                                     id_tournament))
+        visit = self.DB_connection.select_tables(["Team", "Match", "Usr"],
+                                                 ["TOP 20 Team.name", "Team.id_team", "id_match", "Match.match_date"],
+                                                 "Team.id_team=Match.id_visit and Match.checked=1 and id_day={} ORDER BY Match.match_date DESC".format(
+                                                     id_tournament))
+
+        match_info = self.DB_connection.select_tables(["Match", "Usr"],
+                                                      ["TOP 20 Match.place", "Match.match_date", "Match.hour",
+                                                       "Match.id_match", "Match.match_date"],
+                                                      "Match.checked=1 and id_day={} ORDER BY Match.match_date DESC".format(
+                                                          id_tournament))
+        data = []
+        matches.get_model().clear()
+        if local is None:
+            return
+
+        for i in range(len(local)):
+            tmp = [local[i][0], visit[i][0], match_info[i][0],
+                   str(match_info[i][1]), str(match_info[i][2]), match_info[i][3]]
+            matches.get_model().append(tmp)
+
+    def fill_tree_teams(self, id, tree):
+        names = self.DB_connection.read("Team, DetailTournament", ["Team.name"],
+                                        "DetailTournament.id_team=Team.id_team and DetailTournament.id_tournament={}".format(
+                                            id))
+        statistics = self.DB_connection.read("DetailTournament",
+                                             ["win+draw+lost, win, draw, lost, goals - goals_conceded, win*3 + draw"],
+                                             "DetailTournament.id_tournament={}".format(id))
+        data = []
+        for i in range(len(names)):
+            row = []
+            row.append(names[i][0])
+            row.append(statistics[i][0])
+            row.append(statistics[i][1])
+            row.append(statistics[i][2])
+            row.append(statistics[i][3])
+            row.append(statistics[i][4])
+            row.append(statistics[i][5])
+            data.append(row)
+        tree.clear()
+        for row in data:
+            tree.append(row)
+
+    def set_model_to_tree(self, tree, model, headers):
+        tree.set_model(model)
+        for i, column in enumerate(headers):
+            cell = Gtk.CellRendererText()
+            if i == 0:
+                # Headers
+                cell.props.weight_set = True
+                cell.props.weight = Weight.BOLD
+            # Column
+            col = Gtk.TreeViewColumn(column, cell, text=i)
+            # Append column
+            tree.append_column(col)
 
     def onDestroy(self, *args):
         print("OnDestroy")
@@ -232,10 +336,17 @@ class WMain(Gtk.Window):
         if selection is None:
             return
         # SELECT * FROM Team WHERE name ='selectedname'
-        data = self.DB_connection.read("Team", ["*"], "name='{}'".format(model[selection][0]))[0]
-        print(data)
-        team = Team(id_team=data[0], name=data[1], short_name=data[2], local_place=data[3],
-                    id_dt=data[4], goals=data[5], goals_conceded=data[6], win=data[7], lost=data[8], draw=data[9])
+        id_tournament = self.DB_connection.read("Tournament", ["id_tournament"], "name='{}'".format(
+            self.builder.get_object("combobox_tournament").get_model()[
+                self.builder.get_object("combobox_tournament").get_active_iter()][0]))[0][0]
+        model, selection = self.builder.get_object("selection_team").get_selected()
+        team_data = self.DB_connection.read("Team", ["id_team, name, nick_name, local_place, id_dt"],
+                                            "name='{}'".format(model[selection][0]))[0]
+        statistics = self.DB_connection.read("DetailTournament", ["win, lost, draw, goals, goals_conceded"],
+                                             "id_team={} and id_tournament={}".format(team_data[0], id_tournament))[0]
+        team = Team(id_team=team_data[0], name=team_data[1], short_name=team_data[2], local_place=team_data[3],
+                    id_dt=team_data[4], goals=statistics[0], goals_conceded=statistics[1], win=statistics[2],
+                    lost=statistics[3], draw=statistics[4])
         go_to_view_team(self, self.DB_connection, team)
 
     def on_login_pressed(self, button):
@@ -267,17 +378,28 @@ class WMain(Gtk.Window):
         elif user.ocupation == 'referee':
             go_to_referee_manager(self, self.DB_connection, user)
         elif user.ocupation == 'manager':
-            condition = "SELECT id_user FROM Usr WHERE email='{}'".format(user.email)
-            data = self.DB_connection.read("Team", ["*"], "id_dt=({})".format(condition))[0]
-            print(data)
-            team = Team(id_team=data[0], name=data[1], short_name=data[2], local_place=data[3], id_dt=data[4],
-                        goals=data[5], goals_conceded=data[6], win=data[7], lost=data[8], draw=data[9])
+            id_tournament = self.DB_connection.read("Tournament", ["id_tournament"], "name='{}'".format(
+                self.builder.get_object("combobox_tournament").get_model()[
+                    self.builder.get_object("combobox_tournament").get_active_iter()][0]))[0][0]
+            model, selection = self.builder.get_object("selection_team").get_selected()
+            team_data = self.DB_connection.read("Team", ["id_team, name, nick_name, local_place, id_dt"],
+                                                "name='{}'".format(model[selection][0]))[0]
+            statistics = self.DB_connection.read("DetailTournament", ["win, lost, draw, goals, goals_conceded"],
+                                                 "id_team={} and id_tournament={}".format(team_data[0], id_tournament))[
+                0]
+            team = Team(id_team=team_data[0], name=team_data[1], short_name=team_data[2], local_place=team_data[3],
+                        id_dt=team_data[4], goals=statistics[0], goals_conceded=statistics[1], win=statistics[2],
+                        lost=statistics[3], draw=statistics[4])
+
             go_to_team_manager(self, self.DB_connection, team)
 
     def on_tournament_changed(self, combo):
-        print(combo)
-        i = combo.get_active_iter()
-        print(combo.get_model()[i][0])
+        i = combo.get_active()
+        id = self.tournaments[i][0]
+        print("id", id)
+        self.fill_tree_teams(id, self.builder.get_object("treeview_team").get_model())
+        self.fill_tree_last_matches(id)
+        self.fill_tree_next_matches(id)
 
 
 class WViewTeam(Gtk.Window):
@@ -535,16 +657,23 @@ class WAdminManager(Gtk.Window):
         # Matches
         local = self.DB_connection.select_tables_no_distinct(["Team", "Match"], ["Team.name"],
                                                              "Team.id_team=Match.id_local")
+        print("Local:", len(local))
         visit = self.DB_connection.select_tables_no_distinct(["Team", "Match"], ["Team.name"],
                                                              "Team.id_team=Match.id_visit")
+        print("Visit:", len(visit))
         referee = self.DB_connection.select_tables_no_distinct(["Usr", "Match"], ["Usr.name", "Usr.last_name"],
                                                                "Usr.id_user=Match.idreferee")
+        print("Referee:", len(referee))
         match_info = self.DB_connection.read("Match", ["place", "match_date", "hour", "goals_local", "goals_visit"])
+        print("Match info:", len(match_info))
         tournament = self.DB_connection.select_tables_no_distinct(["Tournament", "Match"], ["Tournament.name"],
-                                                                  "Tournament.id_tournament = Match.id_day")
+                                                                  "Match.id_day=Tournament.id_tournament")
+        print("local: ", len(local))
+        print("visit: ", len(visit))
+        print("referee: ", len(referee))
+        print("tournament: ", len(tournament))
         data = []
         for i in range(len(local)):
-            print(referee[i][0])
             tmp = [tournament[i][0], local[i][0], visit[i][0], match_info[i][0],
                    str(match_info[i][1]), str(match_info[i][2]), match_info[i][3],
                    match_info[i][4], referee[i][0], referee[i][1]]
@@ -631,6 +760,10 @@ class WAdminManager(Gtk.Window):
         if active == "Match":
             DialogOK("Por cuestiones de seguridad los partidos una vez\n añadidos no se pueden eliminar ni modificar.")
             return
+        elif active == "Tournament":
+            DialogOK("Por cuestiones de seguridad los partidos una vez\n añadidos no se pueden eliminar ni modificar.")
+            return
+
         dialog = DialogConfirm(self, "Delete " + active + "?", "¿Está seguro de eliminar?")
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
@@ -1220,7 +1353,6 @@ class WAddTournament(Gtk.Window):
         self.init()
         # Connecting destroy action
         self.connect("destroy", self.onDestroy)
-
         self.set_focus(self.builder.get_object("button_back"))
 
     def init(self):
@@ -1232,6 +1364,35 @@ class WAddTournament(Gtk.Window):
         self.layout_main = self.builder.get_object("layout_main")
         self.add(self.layout_main)
 
+        # TREEVIEW
+        teams = self.builder.get_object("treeview_teams")
+        data = self.DB_connection.read("Team", ["id_team, name, nick_name"])
+        list_model = Gtk.ListStore(int, str, str, bool)
+        teams.set_model(list_model)
+        # adding text columns teams
+        renderer_text = Gtk.CellRendererText()
+        renderer_text.set_alignment(0.1, 0.5)
+        column_text = Gtk.TreeViewColumn("ID", renderer_text, text=0)
+        teams.append_column(column_text)
+        renderer_text = Gtk.CellRendererText()
+        renderer_text.set_alignment(0.5, 0.5)
+        column_text = Gtk.TreeViewColumn("Nombre", renderer_text, text=1)
+        teams.append_column(column_text)
+        renderer_text = Gtk.CellRendererText()
+        renderer_text.set_alignment(0.5, 0.5)
+        column_text = Gtk.TreeViewColumn("Nombre corto", renderer_text, text=2)
+        teams.append_column(column_text)
+        # Adding toggle columns to teams
+        renderer_toggle = Gtk.CellRendererToggle()
+        renderer_toggle.set_alignment(0.1, 0.5)
+        renderer_toggle.connect("toggled", self.on_toggled_button, list_model, 3)
+        column_toggle = Gtk.TreeViewColumn("¿Jugará en el torneo?", renderer_toggle, active=3)
+        teams.append_column(column_toggle)
+
+        for team in data:
+            row = [int(team[0]), team[1], team[2], False]
+            list_model.append(row)
+
         # BUTTON
         self.builder.get_object("button_back").connect(
             "clicked", lambda button, parent, present:
@@ -1239,11 +1400,46 @@ class WAddTournament(Gtk.Window):
 
         self.builder.get_object("button_add").connect("clicked", self.on_add_button_pressed)
 
-    def on_add_button_pressed(self, button):
-        print("Hola")
+    @staticmethod
+    def on_toggled_button(self, path, model, pos):
+        model[path][pos] = not model[path][pos]
 
-    def on_modify_button_pressed(self, button):
-        print("Hola")
+    def on_add_button_pressed(self, button):
+        name = self.builder.get_object("entry_name").get_text()
+        season = self.builder.get_object("entry_season").get_text()
+
+        if check_void([name, season]):
+            DialogOK("Todos los campos son requeridos.")
+            return
+
+        dialog = DialogConfirm(self, "Agregar torneo", "¿Está seguro de agregar el torneo?")
+        response = dialog.run()
+        dialog.destroy()
+        if response != Gtk.ResponseType.OK:
+            return
+
+        model = self.builder.get_object("treeview_teams").get_model()
+        count_teams = 0
+        for row in model:
+            count_teams += int(row[3])
+        if count_teams == 0:
+            DialogOK("No se ha agregado ningún equipo.")
+            return
+        elif count_teams < 0:
+            DialogOK("Se han agregado demasiado pocos equipos.")
+            return
+
+        tournament = Tournament(name, season)
+        tournament.add(self.DB_connection)
+        for row in model:
+            if row[3] is True:
+                detail = DetailTournament(tournament.id_tournament, int(row[0]))
+                detail.add(self.DB_connection)
+                del detail
+        DialogOK("Se ha agregado correctamente el torneo.")
+        self.onDestroy()
+        self.parent.builder.get_object("treeview_tournament").get_model().append(
+            [tournament.id_tournament, name, season])
 
     def onDestroy(self, *args):
         go_back(self.parent, self)
@@ -1510,6 +1706,7 @@ class WRefereeManager(Gtk.Window):
         model, selection = self.builder.get_object("selection_match").get_selected()
         id_local = self.teams[model[selection][0]]
         id_visit = self.teams[model[selection][1]]
+        id_tournament = model[selection][5]
         print("Id_local", id_local)
         print("id_visit", id_visit)
         if tmp == 0:
@@ -1527,22 +1724,24 @@ class WRefereeManager(Gtk.Window):
                     del player
             # local
             team = Team(id_team=id_local)
-            team.update_statistics(self.DB_connection, local_goals, visit_goals, int(local_goals > visit_goals),
+            team.update_statistics(self.DB_connection, id_tournament, local_goals, visit_goals,
+                                   int(local_goals > visit_goals),
                                    int(local_goals < visit_goals), int(local_goals == visit_goals))
             # visit
             team = Team(id_team=id_visit)
-            team.update_statistics(self.DB_connection, visit_goals, local_goals, int(visit_goals > local_goals),
+            team.update_statistics(self.DB_connection, id_tournament, visit_goals, local_goals,
+                                   int(visit_goals > local_goals),
                                    int(visit_goals < local_goals), int(visit_goals == local_goals))
 
         elif tmp == 3:
             # local
             team = Team(id_team=id_local)
-            team.update_statistics(self.DB_connection, 3, 0, 1, 0, 0)
+            team.update_statistics(self.DB_connection, id_tournament, 3, 0, 1, 0, 0)
 
         elif tmp == 2:
             # visit
             team = Team(id_team=id_visit)
-            team.update_statistics(self.DB_connection, 3, 0, 1, 0, 0)
+            team.update_statistics(self.DB_connection, id_tournament, 3, 0, 1, 0, 0)
 
         DialogOK("Los cambios han sido guardados.")
 
@@ -1600,6 +1799,7 @@ class WAddMatch(Gtk.Window):
                                                               lambda widget, parent, sql: go_to_add_matches(parent,
                                                                                                             sql), self,
                                                               self.DB_connection)
+        self.builder.get_object("button_finish").connect("clicked", self.on_finish_button_pressed)
 
         # Calendar
         self.builder.get_object("calendar_date").select_day(date.now().day)
@@ -1622,6 +1822,12 @@ class WAddMatch(Gtk.Window):
         data = self.DB_connection.read("Usr", ["name", "last_name"], "job='referee'")
         referee_list = Gtk.ListStore(str, str)
         fill_combo_box(combobox_referee, referee_list, data)
+        # treeview
+        tree = self.builder.get_object("treeview_matches")
+        headers = ["LUGAR", "DIA", "HORA", "LOCAL", "VISITANTE", "ARBITRO", "TORNEO"]
+        model = Gtk.ListStore(str, str, str, int, int, int, int)
+        data = []
+        fill_tree_view_list(headers, data, model, tree)
 
         '''
             POPOVERS
@@ -1649,8 +1855,18 @@ class WAddMatch(Gtk.Window):
     def on_event(self, widget, event, popover):
         # doc(event)
         MOUSE_RIGHT = 3
-        if event.type == Gdk.EventType.BUTTON_PRESS and event.get_button()[1] == MOUSE_RIGHT:
+        if event.type == EventType.BUTTON_PRESS and event.get_button()[1] == MOUSE_RIGHT:
             popover.popup()
+
+    def on_finish_button_pressed(self, button):
+        dialog = DialogConfirm(self, "Agregar partidos", "¿Ha terminado de agregar partidos?")
+        response = dialog.run()
+        dialog.destroy()
+
+        if response == Gtk.ResponseType.OK:
+            for match in self.matches:
+                match.add(self.DB_connection)
+            self.onDestroy()
 
     def on_add_button_pressed(self, button):
         date = self.builder.get_object("calendar_date").get_date()
@@ -1681,21 +1897,26 @@ class WAddMatch(Gtk.Window):
             return
 
         # id_tournament
-        tournament = self.DB_connection.read("Tournament", ["id_tournament"], "name='{}'".format(tournament))[0]
+        id_tournament = self.DB_connection.read("Tournament", ["id_tournament"], "name='{}'".format(tournament))[0]
         # id_local
-        local = self.DB_connection.read("Team", ["id_team"], "nick_name='{}'".format(local))[0]
+        id_local = self.DB_connection.read("Team", ["id_team"], "nick_name='{}'".format(local))[0]
         # id_visit
-        visit = self.DB_connection.read("Team", ["id_team"], "nick_name='{}'".format(visit))[0]
+        id_visit = self.DB_connection.read("Team", ["id_team"], "nick_name='{}'".format(visit))[0]
         # id_referee
-        referee = self.DB_connection.read("Usr", ["id_user"],
-                                          "job='referee' and name='{}' and last_name='{}'".format(referee[0],
-                                                                                                  referee[1]))[0]
-        match = Match(place=place, match_date=date, hour=time, id_local=local, id_visit=visit, id_day=tournament,
-                      id_referee=referee)
+        id_referee = self.DB_connection.read("Usr", ["id_user"],
+                                             "job='referee' and name='{}' and last_name='{}'".format(referee[0],
+                                                                                                     referee[1]))[0]
+        match = Match(place=place, match_date=date, hour=time, id_local=id_local, id_visit=id_visit,
+                      id_day=id_tournament,
+                      id_referee=id_referee)
         dialog = DialogConfirm(self, "¿Agregar partido?", "¿Está seguro de agregar el partido?")
         response = dialog.run()
         dialog.destroy()
         if response == Gtk.ResponseType.OK:
+            headers = ["LUGAR", "DIA", "HORA", "LOCAL", "VISITANTE", "ARBITRO", "TORNEO"]
+
+            row = [place, date, time, local, visit, referee, tournament]
+            self.builder.get_object("treeview_matches").get_model().append(row)
             self.matches.append(match)
             DialogOK("Se ha añadido el encuentro.")
 

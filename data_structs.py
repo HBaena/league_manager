@@ -140,7 +140,7 @@ class Player:
         query += "appearances = appearances + {}, ".format(appearence)
         query += "goals = goals + {}\n".format(goals)
         query += "WHERE name='{}' AND last_name='{}' AND last_last_name='{}'".format(self.name, self.last_name,
-                                                                                    self.last_last_name)
+                                                                                     self.last_last_name)
         sql.query(query)
 
     def update(self, sql):
@@ -193,7 +193,7 @@ class League:
 class Tournament:
     """docstring for Tournament"""
 
-    def __init__(self, name='', season='', id_tournament='', id_league=''):
+    def __init__(self, name='', season='', id_tournament='', id_league='1'):
         self.id_tournament = id_tournament
         self.name = name
         self.season = season
@@ -261,47 +261,21 @@ class Team:
         sql.delete('Team', "id_team={} or name='{}'".format(self.id_team, self.name))
         sql.commit()
 
-    def update_statistics(self, sql, goals, goals_conceded, win, lost, draw):
-        query = "UPDATE Team\n"
+    def update_statistics(self, sql, id_tournament, goals, goals_conceded, win, lost, draw):
+        query = "UPDATE DetailTournament\n"
         query += "SET "
         query += "win = win + {}, ".format(win)
         query += "lost = lost + {}, ".format(lost)
         query += "draw = draw + {}, ".format(draw)
         query += "goals = goals + {}, ".format(goals)
         query += "goals_conceded = goals_conceded + {}\n".format(goals_conceded)
-        query += "WHERE id_team='{}'".format(self.id_team)
+        query += "WHERE id_team={} and id_tournament={}".format(self.id_team, id_tournament)
         sql.query(query)
 
     def update(self, sql):
         self.__refresh_args()
         sql.update('Team', self.columns, self.args, 'id_team={}'.format(self.id_team))
         sql.commit()
-
-    class DetailTournament:
-        """docstring for DetailTournament"""
-
-        def __init__(self, id_detail=0, id_tournament=0, id_team=0):
-            self.id_detail = id_detail
-            self.id_tournament = id_tournament
-            self.id_team = id_team
-            self.columns = ['id_detail', 'id_tournament', 'id_team']
-
-        def add(self, sql):
-            # nombre de la tabla, id
-            self.id_detail = sql.next_ID('DetailTournament', 'id_detail') + 1
-            args = [self.id_detail, self.id_tournament, self.id_team]
-            # create(Nombre de la tabla, ...)
-            sql.create('DetailTournament', self.columns, args)
-            sql.commit()
-
-        def delete(self, sql):
-            sql.delete('DetailTournament', 'id_detail={}'.format(self.id_detail))
-            sql.commit()
-
-        def update(self, sql):
-            args = [self.id_detail, self.id_tournament, self.id_team]
-            sql.update('DetailTournament', self.columns, args, 'id_detail={}'.format(self.id_detail))
-            sql.commit()
 
 
 class Match:
@@ -388,20 +362,22 @@ class Day:
 class DetailTournament:
     """docstring for DetailTournament"""
 
-    def __init__(self, id_detail='', id_tournament='', id_team=''):
-        self.id_detail = id_detail
+    def __init__(self, id_tournament='', id_team='', win=0, lost=0, draw=0, goals=0, goals_conceded=0):
         self.id_tournament = id_tournament
         self.id_team = id_team
+        self.win = win
+        self.lost = lost
+        self.draw = draw
+        self.goals = goals
+        self.goals_conceded = goals_conceded
         self.columns = [
-            'id_detail', 'id_tournament', 'id_team'
+            'id_tournament', 'id_team', 'win', 'lost', 'draw', 'goals', 'goals_conceded'
         ]
 
     def add(self, sql):
         # nombre de la tabla, id
-        self.id_detail = sql.next_ID('DetailTournament', 'id_detail') + 1
-
         args = [
-            self.id_detail, self.id_tournament, self.id_team
+            self.id_tournament, self.id_team, self.win, self.lost, self.draw, self.goals, self.goals_conceded
         ]
         # create(Nombre de la tabla, ...)
         sql.create('DetailTournament', self.columns, args)
@@ -413,7 +389,8 @@ class DetailTournament:
 
     def update(self, sql):
         args = [
-            self.id_detail, self.id_tournament, self.id_team
+            self.id_tournament, self.id_team, self.win, self.lost, self.draw, self.goals, self.goals_conceded
         ]
-        sql.update('DetailTournament', self.columns, args, 'id_detail={}'.format(self.id_detail))
+        sql.update('DetailTournament', self.columns, args,
+                   'id_team={} and id_tournament={}'.format(self.id_team, self.id_tournament))
         sql.commit()

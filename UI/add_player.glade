@@ -132,17 +132,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkFileChooserButton" id="file_photo">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="tooltip_text" translatable="yes">Foto del jugador</property>
-                <property name="halign">center</property>
-                <property name="title" translatable="yes"/>
-              </object>
-              <packing>
-                <property name="left_attach">3</property>
-                <property name="top_attach">2</property>
-              </packing>
+              <placeholder/>
             </child>
             <child>
               <placeholder/>
