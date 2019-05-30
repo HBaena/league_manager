@@ -2,22 +2,27 @@
 import db_connection as SQL
 import UI
 import gi
-
+import glades
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+from gi.repository import Gtk, Gio
 from gi.repository.Gdk import Screen
 
 
 def gtk_style():
     css_provider = Gtk.CssProvider()
-    css_provider.load_from_path('styles.css')
+    try:
+        css_provider.load_from_path("/home/hbaena/league_manager/styles.css")
+    except Exception as e:
+        print(e)
+    else:
+        css_provider.load_from_path("styles.css")
+
 
     screen = Screen.get_default()
     style_context = Gtk.StyleContext()
     style_context.add_provider_for_screen(
         screen, css_provider,
         Gtk.STYLE_PROVIDER_PRIORITY_USER)
-
 
 print("Connecting to remote db ...")
 SQL_CONNECTION = SQL.SQLConnection(

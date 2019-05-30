@@ -1,6 +1,6 @@
 import gi
 import pandas
-
+import glades
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from gi.repository.Pango import Weight
@@ -29,7 +29,7 @@ def check_void(list):
 
 def add_result():
     builder = Gtk.Builder()
-    builder.add_from_file("UI/add_result.glade")
+    builder.add_from_string(glades.ADD_RESULT)
 
     # LAYOUT
     result = [None, None]
@@ -182,7 +182,7 @@ class WMain(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/main.glade")
+        self.builder.add_from_string(glades.MAIN)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
@@ -427,7 +427,7 @@ class WViewTeam(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/view_team.glade")
+        self.builder.add_from_string(glades.VIEW_TEAM)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
@@ -500,7 +500,7 @@ class WViewPlayer(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/view_player.glade")
+        self.builder.add_from_string(glades.VIEW_PLAYER)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
@@ -549,7 +549,7 @@ class WContact(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/contact.glade")
+        self.builder.add_from_string(glades.CONTACT)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
@@ -603,7 +603,7 @@ class WAdminManager(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/admin_manager.glade")
+        self.builder.add_from_string(glades.ADMIN_MANAGER)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
@@ -840,7 +840,7 @@ class WTeamManager(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/manager_team.glade")
+        self.builder.add_from_string(glades.MANAGER_TEAM)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
@@ -930,7 +930,7 @@ class WAddTeam(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/add_team.glade")
+        self.builder.add_from_string(glades.ADD_TEAM)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
@@ -1081,7 +1081,7 @@ class WAddUser(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/add_user.glade")
+        self.builder.add_from_string(glades.ADD_USER)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
@@ -1224,7 +1224,7 @@ class WAddPlayer(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/add_player.glade")
+        self.builder.add_from_string(glades.ADD_PLAYER)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
@@ -1358,7 +1358,7 @@ class WAddTournament(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/add_tournament.glade")
+        self.builder.add_from_string(glades.ADD_TOURNAMENT)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
@@ -1470,7 +1470,7 @@ class WRefereeManager(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/referee_manager.glade")
+        self.builder.add_from_string(glades.REFEREE_MANAGER)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
@@ -1782,7 +1782,7 @@ class WAddMatch(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/add_match.glade")
+        self.builder.add_from_string(glades.ADD_MATCH)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
@@ -1949,7 +1949,7 @@ class WAddMatches(Gtk.Window):
     def init(self):
         # Reading builder
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI/add_matches.glade")
+        self.builder.add_from_string(glades.ADD_MATCHES)
 
         # LAYOUT
         self.layout_main = self.builder.get_object("layout_main")
