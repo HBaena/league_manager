@@ -6,16 +6,15 @@ import glades
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio
 from gi.repository.Gdk import Screen
-
+from sys import argv
 
 def gtk_style():
     css_provider = Gtk.CssProvider()
     try:
-        css_provider.load_from_path("/home/hbaena/league_manager/styles.css")
+        css_provider.load_from_path(argv[1]+"/styles.css")
+        print("Css loades")
     except Exception as e:
         print(e)
-    else:
-        css_provider.load_from_path("styles.css")
 
 
     screen = Screen.get_default()

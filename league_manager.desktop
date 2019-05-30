@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=League Manager
+Exec=FULL_PATH/main.py $PWD
+Icon=FULL_PATH/icon.png
+Terminal=true
