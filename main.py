@@ -11,7 +11,7 @@ from sys import argv
 def gtk_style():
     css_provider = Gtk.CssProvider()
     try:
-        css_provider.load_from_path(argv[1]+"/styles.css")
+        css_provider.load_from_path(argv[0][:-8]+"/styles.css")
         print("Css loades")
     except Exception as e:
         print(e)
