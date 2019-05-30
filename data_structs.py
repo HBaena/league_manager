@@ -59,10 +59,8 @@ class User:
     def update(self, sql, old=None):
         if old is None:
             old = self.email
-        args = [
-            str(self.id_user), str(self.id_league), self.name, self.last_name, self.last_last_name,
-            self.city, self.suburb, self.street, str(self.no), self.phone, self.email, self.password, self.ocupation
-        ]
+        args = [str(self.id_user), str(self.id_league), self.name, self.last_name, self.last_last_name,
+            self.city, self.suburb, self.street, str(self.no), self.phone, self.email, self.password, self.ocupation]
         sql.update('Usr', self.columns, args, "email='{}'".format(old))
         sql.commit()
 
@@ -139,7 +137,8 @@ class Player:
         query += "reprimands = reprimands + {}, ".format(reprimand)
         query += "appearances = appearances + {}, ".format(appearence)
         query += "goals = goals + {}\n".format(goals)
-        query += "WHERE name='{}' AND last_name='{}' AND last_last_name='{}'".format(self.name, self.last_name,
+        query += "WHERE name='{}' AND last_name='{}' AND last_last_name='{}'".format(self.name,
+                                                                                     self.last_name,
                                                                                      self.last_last_name)
         sql.query(query)
 
@@ -238,12 +237,6 @@ class Team:
                         'lost', 'draw']
         self.args = None
 
-    def get_players(self, sql):
-        return sql.read("Player", ["curp", "name", "last_name", "last_last_name", "city"],
-                        "id_team = '{}'".format(self.id_team))
-
-    def get_dt(self, sql):
-        return sql.read("User", ["*"], "id_user = '{}'".format(self.id_dt))
 
     def __refresh_args(self):
         self.args = [self.id_team, self.name, self.short_name, self.local_place, self.id_dt, self.goals,
@@ -260,6 +253,13 @@ class Team:
     def delete(self, sql):
         sql.delete('Team', "id_team={} or name='{}'".format(self.id_team, self.name))
         sql.commit()
+
+    def get_players(self, sql):
+        return sql.read("Player", ["curp", "name", "last_name", "last_last_name", "city"],
+                        "id_team = '{}'".format(self.id_team))
+
+    def get_dt(self, sql):
+        return sql.read("User", ["*"], "id_user = '{}'".format(self.id_dt))
 
     def update_statistics(self, sql, id_tournament, goals, goals_conceded, win, lost, draw):
         query = "UPDATE DetailTournament\n"

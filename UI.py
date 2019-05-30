@@ -2011,10 +2011,11 @@ class WAddMatches(Gtk.Window):
                 id_visit = (int(data["ID VISITANTE"][i]))
                 id_referee = (int(data["ID ARBITRO"][i]))
                 id_tournament = (int(data["ID TORNEO"][i]))
-                match = Match(place=place, match_date=date, hour=hour, id_local=id_local, id_visit=id_visit,
-                              id_referee=id_referee, id_day=id_tournament)
+                match = Match(place=place, match_date=date, hour=hour, id_local=id_local,
+                              id_visit=id_visit, id_referee=id_referee, id_day=id_tournament)
                 self.matches.append(match)
                 d.append([place, date, hour, id_local, id_visit, id_referee, id_tournament])
+
         except Exception as e:
             print(e)
             DialogOK("Parece ser que el archivo no cumple con\n las características para el programa.")

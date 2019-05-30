@@ -18,8 +18,6 @@ import pyodbc
 
 
 # convert a list to a string of values with format "'value1', 'values2', ..."
-
-
 def list2values(columns):
     return ','.join("\'" + str(e) + "\'" for e in columns)
 
@@ -112,11 +110,8 @@ class SQLConnection():
     def read(self, table, columns, condition=None):
         print("Read")
         data = []
-        # query = "SELECT " + list2columns(columns) + " FROM " + table
         query = "SELECT {} FROM {}{}".format(list2columns(
             columns), table, "\nWHERE " + condition + ";" if condition is not None else ";")
-        # print(query)
-
         try:
             self.cursor.execute(query)
         except Exception as e:
